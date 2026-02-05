@@ -4,14 +4,33 @@ declare(strict_types=1);
 
 namespace BVP\Purchaser\Tests;
 
-use BVP\Purchaser\Purchaser;
+use BVP\Purchaser\PurchaserCore;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 /**
  * @author shimomo
  */
-final class PurchaserTest extends PHPUnitTestCase
+final class PurchaserCoreTest extends PHPUnitTestCase
 {
+    /**
+     * @psalm-suppress PropertyNotSetInConstructor
+     * @psalm-var \BVP\Purchaser\PurchaserCore
+     *
+     * @var \BVP\Purchaser\PurchaserCore
+     */
+    protected PurchaserCore $purchaser;
+
+    /**
+     * @psalm-return void
+     *
+     * @return void
+     */
+    #[\Override]
+    public function setUp(): void
+    {
+        $this->purchaser = new PurchaserCore();
+    }
+
     /**
      * @doesNotPerformAssertions
      *
@@ -41,7 +60,8 @@ final class PurchaserTest extends PHPUnitTestCase
             return;
         }
 
-        Purchaser::setDepositAmount(1000)
+        $this->purchaser
+            ->setDepositAmount(1000)
             ->setSubscriberNumber($subscriberNumber)
             ->setPersonalIdentificationNumber($personalIdentificationNumber)
             ->setAuthenticationPassword($authenticationPassword)

@@ -1,70 +1,161 @@
 <?php
 
-namespace Boatrace\Venture\Project;
+declare(strict_types=1);
 
-use DI\Container;
-use DI\ContainerBuilder;
-use Facebook\WebDriver\Chrome\ChromeOptions;
+namespace BVP\Purchaser;
 
 /**
+ * @psalm-method static \BVP\Purchaser\PurchaserCore setDepositAmount(int $depositAmount)
+ * @psalm-method static \BVP\Purchaser\PurchaserCore setSubscriberNumber(string $subscriberNumber)
+ * @psalm-method static \BVP\Purchaser\PurchaserCore setAuthenticationPassword(string $authenticationPassword)
+ * @psalm-method static \BVP\Purchaser\PurchaserCore setPurchasePassword(string $purchasePassword)
+ * @psalm-method static void purchase(int $stadiumNumber, int $number, int $type, array $focuses)
+ *
+ * @method static \BVP\Purchaser\PurchaserCore setDepositAmount(int $depositAmount)
+ * @method static \BVP\Purchaser\PurchaserCore setSubscriberNumber(string $subscriberNumber)
+ * @method static \BVP\Purchaser\PurchaserCore setAuthenticationPassword(string $authenticationPassword)
+ * @method static \BVP\Purchaser\PurchaserCore setPurchasePassword(string $purchasePassword)
+ * @method static void purchase(int $stadiumNumber, int $number, int $type, array $focuses)
+ *
  * @author shimomo
  */
-class Purchaser
+final class Purchaser implements PurchaserInterface
 {
     /**
-     * @var array
+     * @psalm-var ?\BVP\Purchaser\PurchaserInterface
+     *
+     * @var ?\BVP\Purchaser\PurchaserInterface
      */
-    protected static array $instances;
+    private static ?PurchaserInterface $instance;
 
     /**
-     * @var \DI\Container
+     * @psalm-param \BVP\Purchaser\PurchaserCoreInterface $purchaser
+     *
+     * @param \BVP\Purchaser\PurchaserCoreInterface $purchaser
      */
-    protected static Container $container;
+    public function __construct(private readonly PurchaserCoreInterface $purchaser)
+    {
+        //
+    }
 
     /**
-     * @param  \Boatrace\Venture\Project\MainPurchaser  $purchaser
-     * @return void
+     * @psalm-param non-empty-string $name
+     * @psalm-param list<mixed> $arguments
+     * @psalm-return mixed
+     *
+     * @param string $name
+     * @param array $arguments
+     * @return mixed
      */
-    public function __construct(protected MainPurchaser $purchaser){}
-
-    /**
-     * @param  string  $name
-     * @param  array   $arguments
-     * @return \Boatrace\Venture\Project\MainPurchaser
-     */
-    public function __call(string $name, array $arguments): MainPurchaser
+    public function __call(string $name, array $arguments): mixed
     {
         return $this->purchaser->$name(...$arguments);
     }
 
     /**
-     * @param  string  $name
-     * @param  array   $arguments
-     * @return \Boatrace\Venture\Project\MainPurchaser
+     * @psalm-param non-empty-string $name
+     * @psalm-param list<mixed> $arguments
+     * @psalm-return mixed
+     *
+     * @param string $name
+     * @param array $arguments
+     * @return mixed
      */
-    public static function __callStatic(string $name, array $arguments): MainPurchaser
+    public static function __callStatic(string $name, array $arguments): mixed
     {
-        return self::getInstance('Purchaser')->$name(...$arguments);
+        return self::getInstance()->$name(...$arguments);
     }
 
     /**
-     * @param  string  $name
-     * @return \Boatrace\Venture\Project\Purchaser|\Facebook\WebDriver\Chrome\ChromeOptions
+     * @psalm-param ?\BVP\Purchaser\PurchaserCoreInterface $purchaserCore
+     * @psalm-param ?non-empty-string $seleniumServerUrl
+     * @psalm-param ?int<1000, max> $depositAmount
+     * @psalm-param ?non-empty-string $subscriberNumber
+     * @psalm-param ?non-empty-string $personalIdentificationNumber
+     * @psalm-param ?non-empty-string $authenticationPassword
+     * @psalm-param ?non-empty-string $purchasePassword
+     * @psalm-return \BVP\Purchaser\PurchaserInterface
+     *
+     * @param ?\BVP\Purchaser\PurchaserCoreInterface $purchaserCore
+     * @param ?string $seleniumServerUrl
+     * @param ?int<1000, max> $depositAmount
+     * @param ?string $subscriberNumber
+     * @param ?string $personalIdentificationNumber
+     * @param ?string $authenticationPassword
+     * @param ?string $purchasePassword
+     * @return \BVP\Purchaser\PurchaserInterface
      */
-    public static function getInstance(string $name): Purchaser|ChromeOptions
-    {
-        return self::$instances[$name] ?? self::$instances[$name] = self::getContainer()->get($name);
+    #[\Override]
+    public static function getInstance(
+        ?PurchaserCoreInterface $purchaserCore = null,
+        ?string $seleniumServerUrl = null,
+        ?int $depositAmount = null,
+        ?string $subscriberNumber = null,
+        ?string $personalIdentificationNumber = null,
+        ?string $authenticationPassword = null,
+        ?string $purchasePassword = null
+    ): PurchaserInterface {
+        return self::$instance ??= new self(
+            $purchaserCore ?? new PurchaserCore(
+                $seleniumServerUrl,
+                $depositAmount,
+                $subscriberNumber,
+                $personalIdentificationNumber,
+                $authenticationPassword,
+                $purchasePassword
+            )
+        );
     }
 
     /**
-     * @return \DI\Container
+     * @psalm-param ?\BVP\Purchaser\PurchaserCoreInterface $purchaserCore
+     * @psalm-param ?non-empty-string $seleniumServerUrl
+     * @psalm-param ?int<1000, max> $depositAmount
+     * @psalm-param ?non-empty-string $subscriberNumber
+     * @psalm-param ?non-empty-string $personalIdentificationNumber
+     * @psalm-param ?non-empty-string $authenticationPassword
+     * @psalm-param ?non-empty-string $purchasePassword
+     * @psalm-return \BVP\Purchaser\PurchaserInterface
+     *
+     * @param ?\BVP\Trimmer\PurchaserCoreInterface $purchaserCore
+     * @param ?string $seleniumServerUrl
+     * @param ?int<1000, max> $depositAmount
+     * @param ?string $subscriberNumber
+     * @param ?string $personalIdentificationNumber
+     * @param ?string $authenticationPassword
+     * @param ?string $purchasePassword
+     * @return \BVP\Trimmer\PurchaserInterface
      */
-    public static function getContainer(): Container
+    #[\Override]
+    public static function createInstance(
+        ?PurchaserCoreInterface $purchaserCore = null,
+        ?string $seleniumServerUrl = null,
+        ?int $depositAmount = null,
+        ?string $subscriberNumber = null,
+        ?string $personalIdentificationNumber = null,
+        ?string $authenticationPassword = null,
+        ?string $purchasePassword = null
+    ): PurchaserInterface {
+        return self::$instance = new self(
+            $purchaserCore ?? new PurchaserCore(
+                $seleniumServerUrl,
+                $depositAmount,
+                $subscriberNumber,
+                $personalIdentificationNumber,
+                $authenticationPassword,
+                $purchasePassword
+            )
+        );
+    }
+
+    /**
+     * @psalm-return void
+     *
+     * @return void
+     */
+    #[\Override]
+    public static function resetInstance(): void
     {
-        return self::$container ?? self::$container = (function () {
-            $builder = new ContainerBuilder;
-            $builder->addDefinitions(__DIR__ . '/../config/definitions.php');
-            return $builder->build();
-        })();
+        self::$instance = null;
     }
 }

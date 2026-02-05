@@ -1,9 +1,9 @@
 <?php
 
-namespace Boatrace\Venture\Project;
+declare(strict_types=1);
 
-use DI\Container;
-use DI\ContainerBuilder;
+namespace BVP\Purchaser;
+
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
@@ -15,51 +15,50 @@ use RuntimeException;
 /**
  * @author shimomo
  */
-class MainPurchaser
+final class PurchaserCore implements PurchaserCoreInterface
 {
     /**
+     * @psalm-var \Facebook\WebDriver\Remote\RemoteWebDriver
+     *
      * @var \Facebook\WebDriver\Remote\RemoteWebDriver
      */
-    protected RemoteWebDriver $driver;
+    private RemoteWebDriver $driver;
 
     /**
-     * @var int
-     */
-    protected int $depositAmount;
-
-    /**
-     * @var string
-     */
-    protected string $subscriberNumber;
-
-    /**
-     * @var string
-     */
-    protected string $personalIdentificationNumber;
-
-    /**
-     * @var string
-     */
-    protected string $authenticationPassword;
-
-    /**
-     * @var string
-     */
-    protected string $purchasePassword;
-
-    /**
+     * @psalm-param ?non-empty-string $seleniumServerUrl
+     * @psalm-param ?int<1000, max> $depositAmount
+     * @psalm-param ?non-empty-string $subscriberNumber
+     * @psalm-param ?non-empty-string $personalIdentificationNumber
+     * @psalm-param ?non-empty-string $authenticationPassword
+     * @psalm-param ?non-empty-string $purchasePassword
+     * @psalm-return void
+     *
+     * @param ?string $seleniumServerUrl
+     * @param ?int<1000, max> $depositAmount
+     * @param ?string $subscriberNumber
+     * @param ?string $personalIdentificationNumber
+     * @param ?string $authenticationPassword
+     * @param ?string $purchasePassword
      * @return void
      */
-    public function __construct()
-    {
-        $options = Purchaser::getInstance('ChromeOptions');
+    public function __construct(
+        private ?string $seleniumServerUrl = null,
+        private ?int $depositAmount = null,
+        private ?string $subscriberNumber = null,
+        private ?string $personalIdentificationNumber = null,
+        private ?string $authenticationPassword = null,
+        private ?string $purchasePassword = null
+    ) {
+        $options = new ChromeOptions();
         $options->addArguments(['--headless']);
-        $capabilities = DesiredCapabilities::chrome();
+        $capabilities = new DesiredCapabilities();
         $capabilities->setCapability(ChromeOptions::CAPABILITY, $options);
-        $this->driver = RemoteWebDriver::create('http://localhost:4444/wd/hub', $capabilities);
+        $this->driver = RemoteWebDriver::create($seleniumServerUrl ?? 'http://localhost:4444', $capabilities);
     }
 
     /**
+     * @psalm-return void
+     *
      * @return void
      */
     public function __destruct()
@@ -68,10 +67,14 @@ class MainPurchaser
     }
 
     /**
-     * @param  int  $depositAmount
-     * @return \Boatrace\Venture\Project\MainPurchaser
+     * @psalm-param int<1000, max> $depositAmount
+     * @psalm-return \BVP\Purchaser\PurchaserCore
+     *
+     * @param int $depositAmount
+     * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setDepositAmount(int $depositAmount): MainPurchaser
+    #[\Override]
+    public function setDepositAmount(int $depositAmount): PurchaserCore
     {
         $this->depositAmount = $depositAmount;
 
@@ -79,10 +82,14 @@ class MainPurchaser
     }
 
     /**
-     * @param  string  $subscriberNumber
-     * @return \Boatrace\Venture\Project\MainPurchaser
+     * @psalm-param non-empty-string $subscriberNumber
+     * @psalm-return \BVP\Purchaser\PurchaserCore
+     *
+     * @param string $subscriberNumber
+     * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setSubscriberNumber(string $subscriberNumber): MainPurchaser
+    #[\Override]
+    public function setSubscriberNumber(string $subscriberNumber): PurchaserCore
     {
         $this->subscriberNumber = $subscriberNumber;
 
@@ -90,10 +97,14 @@ class MainPurchaser
     }
 
     /**
-     * @param  string  $personalIdentificationNumber
-     * @return \Boatrace\Venture\Project\MainPurchaser
+     * @psalm-param non-empty-string $personalIdentificationNumber
+     * @psalm-return \BVP\Purchaser\PurchaserCore
+     *
+     * @param string $personalIdentificationNumber
+     * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setPersonalIdentificationNumber(string $personalIdentificationNumber): MainPurchaser
+    #[\Override]
+    public function setPersonalIdentificationNumber(string $personalIdentificationNumber): PurchaserCore
     {
         $this->personalIdentificationNumber = $personalIdentificationNumber;
 
@@ -101,10 +112,14 @@ class MainPurchaser
     }
 
     /**
-     * @param  string  $authenticationPassword
-     * @return \Boatrace\Venture\Project\MainPurchaser
+     * @psalm-param non-empty-string $authenticationPassword
+     * @psalm-return \BVP\Purchaser\PurchaserCore
+     *
+     * @param string $authenticationPassword
+     * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setAuthenticationPassword(string $authenticationPassword): MainPurchaser
+    #[\Override]
+    public function setAuthenticationPassword(string $authenticationPassword): PurchaserCore
     {
         $this->authenticationPassword = $authenticationPassword;
 
@@ -112,10 +127,14 @@ class MainPurchaser
     }
 
     /**
-     * @param  string  $purchasePassword
-     * @return \Boatrace\Venture\Project\MainPurchaser
+     * @psalm-param non-empty-string $purchasePassword
+     * @psalm-return \BVP\Purchaser\PurchaserCore
+     *
+     * @param string $purchasePassword
+     * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setPurchasePassword(string $purchasePassword): MainPurchaser
+    #[\Override]
+    public function setPurchasePassword(string $purchasePassword): PurchaserCore
     {
         $this->purchasePassword = $purchasePassword;
 
@@ -123,15 +142,25 @@ class MainPurchaser
     }
 
     /**
-     * @param  int    $stadiumId
-     * @param  int    $raceNumber
-     * @param  int    $purchaseType
-     * @param  array  $forecasts
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
+     * @psalm-param int<1, 7> $type
+     * @psalm-param non-empty-array<non-empty-string, int<100, max>> $focuses
+     * @psalm-return void
+     *
+     * @param int $stadiumNumber
+     * @param int $number
+     * @param int $type
+     * @param array $focuses
      * @return void
      */
-    public function purchase(int $stadiumId, int $raceNumber, int $purchaseType, array $forecasts): void
+    #[\Override]
+    public function purchase(int $stadiumNumber, int $number, int $type, array $focuses): void
     {
         $this->driver->get('https://ib.mbrace.or.jp/');
+
+        /** @psalm-var non-empty-list<non-empty-string> */
+        $previousHandles = $this->driver->getWindowHandles();
 
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('memberNo')));
         $this->driver->findElement(WebDriverBy::id('memberNo'))->sendKeys($this->subscriberNumber);
@@ -142,58 +171,57 @@ class MainPurchaser
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('authPassword')));
         $this->driver->findElement(WebDriverBy::id('authPassword'))->sendKeys($this->authenticationPassword);
 
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('loginButton')));
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('loginButton')));
         $this->driver->findElement(WebDriverBy::id('loginButton'))->click();
 
+        /** @psalm-var non-empty-list<non-empty-string> */
         $handles = $this->driver->getWindowHandles();
-        $this->driver->switchTo()->window($handles[array_key_last($handles)]);
+        $newHandle = array_diff($handles, $previousHandles);
+        $handle = reset($newHandle);
+        if (!is_string($handle)) {
+            return;
+        }
+
+        $this->driver->switchTo()->window($handle);
 
         try {
-            $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('newsoverviewdispCloseButton')));
             $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('newsoverviewdispCloseButton')));
             $this->driver->findElement(WebDriverBy::id('newsoverviewdispCloseButton'))->click();
-        } catch (NoSuchElementException $exception) {}
+        } catch (NoSuchElementException $exception) {
+            // Nothing
+        }
 
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('gnavi01')));
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('gnavi01')));
         $this->driver->findElement(WebDriverBy::id('gnavi01'))->click();
 
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('charge')));
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('charge')));
         $this->driver->findElement(WebDriverBy::id('charge'))->click();
 
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('chargeInstructAmt')));
-        $this->driver->findElement(WebDriverBy::id('chargeInstructAmt'))->sendKeys($this->depositAmount / 1000);
+        $this->driver->findElement(WebDriverBy::id('chargeInstructAmt'))->sendKeys($this->depositAmount ?? 0 / 1000);
 
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('chargeBetPassword')));
         $this->driver->findElement(WebDriverBy::id('chargeBetPassword'))->sendKeys($this->purchasePassword);
 
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('executeCharge')));
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('executeCharge')));
         $this->driver->findElement(WebDriverBy::id('executeCharge'))->click();
 
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('ok')));
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('ok')));
         $this->driver->findElement(WebDriverBy::linkText('OK'))->click();
 
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('closeChargecomp')));
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('closeChargecomp')));
         $this->driver->findElement(WebDriverBy::id('closeChargecomp'))->click();
 
         for ($depositCounter = 1; $depositCounter <= 10; ++$depositCounter) {
-            $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('gnavi02')));
             $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('gnavi02')));
             $this->driver->findElement(WebDriverBy::id('gnavi02'))->click();
 
-            $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('balref')));
             $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('balref')));
             $this->driver->findElement(WebDriverBy::id('balref'))->click();
 
             $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::cssSelector('.gray > .col3')));
             $depositAmount = (int) preg_replace('/[^0-9]/', '', $this->driver->findElement(WebDriverBy::cssSelector('.gray > .col3'))->getText());
 
-            $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('closeBalref')));
             $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('closeBalref')));
             $this->driver->findElement(WebDriverBy::id('closeBalref'))->click();
 
@@ -206,45 +234,40 @@ class MainPurchaser
             }
         }
 
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('jyo' . sprintf('%02d', $stadiumId))));
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('jyo' . sprintf('%02d', $stadiumId))));
-        $this->driver->findElement(WebDriverBy::id('jyo' . sprintf('%02d', $stadiumId)))->click();
+        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('jyo' . sprintf('%02d', $stadiumNumber))));
+        $this->driver->findElement(WebDriverBy::id('jyo' . sprintf('%02d', $stadiumNumber)))->click();
 
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('selRaceNo' . sprintf('%02d', $raceNumber))));
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('selRaceNo' . sprintf('%02d', $raceNumber))));
-        $this->driver->findElement(WebDriverBy::id('selRaceNo' . sprintf('%02d', $raceNumber)))->click();
+        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('selRaceNo' . sprintf('%02d', $number))));
+        $this->driver->findElement(WebDriverBy::id('selRaceNo' . sprintf('%02d', $number)))->click();
 
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::textToBePresentInElement(WebDriverBy::xpath('descendant-or-self::body/div[1]/main/div/div[1]/section[2]/div[2]/dl/dt/strong'), $raceNumber . 'R'));
+        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementTextContains(WebDriverBy::xpath('descendant-or-self::body/div[1]/main/div/div[1]/section[2]/div[2]/dl/dt/strong'), $number . 'R'));
 
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('betkati' . $purchaseType)));
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('betkati' . $purchaseType)));
-        $this->driver->findElement(WebDriverBy::id('betkati' . $purchaseType))->click();
+        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('betkati' . $type)));
+        $this->driver->findElement(WebDriverBy::id('betkati' . $type))->click();
 
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('betway1')));
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('betway1')));
         $this->driver->findElement(WebDriverBy::id('betway1'))->click();
 
         $totalAmount = 0;
 
-        foreach ($forecasts as $forecast => $amount) {
-            foreach (range(1, iconv_strlen(strval($forecast))) as $i) {
-                $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('regbtn_' . substr($forecast, $i - 1, 1) . '_' . $i)));
-                $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('regbtn_' . substr($forecast, $i - 1, 1) . '_' . $i)));
-                $this->driver->findElement(WebDriverBy::id('regbtn_' . substr($forecast, $i - 1, 1) . '_' . $i))->click();
+        foreach ($focuses as $focus => $amount) {
+            $focusParts = explode('-', $focus);
+
+            foreach ($focusParts as $index => $focusPart) {
+                $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('regbtn_' . $focusPart . '_' . $index + 1)));
+                $this->driver->findElement(WebDriverBy::id('regbtn_' . $focusPart . '_' . $index + 1))->click();
             }
 
             $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('amount')));
             $this->driver->findElement(WebDriverBy::id('amount'))->clear();
             $this->driver->findElement(WebDriverBy::id('amount'))->sendKeys($amount / 100);
 
-            $totalAmount += (int) $amount;
+            $totalAmount += $amount;
 
-            $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('regAmountBtn')));
             $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('regAmountBtn')));
             $this->driver->findElement(WebDriverBy::id('regAmountBtn'))->click();
         }
 
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::cssSelector('.btnSubmit')));
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::cssSelector('.btnSubmit')));
         $this->driver->findElement(WebDriverBy::cssSelector('.btnSubmit'))->click();
 
@@ -254,11 +277,9 @@ class MainPurchaser
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('betPassword')));
         $this->driver->findElement(WebDriverBy::name('betPassword'))->sendKeys($this->purchasePassword);
 
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('submitBet')));
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('submitBet')));
         $this->driver->findElement(WebDriverBy::id('submitBet'))->click();
 
-        $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('ok')));
         $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('ok')));
         $this->driver->findElement(WebDriverBy::id('ok'))->click();
 

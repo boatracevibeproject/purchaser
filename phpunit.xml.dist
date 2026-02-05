@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit backupGlobals="false"
-         colors="true"
-         processIsolation="false"
-         stopOnFailure="false">
-
+<phpunit
+    backupGlobals="false"
+    cacheDirectory=".phpunit.cache"
+    colors="true"
+    processIsolation="false"
+    stopOnFailure="false"
+>
     <testsuites>
         <testsuite name="Boatrace Venture Project">
             <directory suffix="Test.php">tests/</directory>
