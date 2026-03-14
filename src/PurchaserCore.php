@@ -251,7 +251,11 @@ final class PurchaserCore implements PurchaserCoreInterface
         $totalAmount = 0;
 
         foreach ($focuses as $focus => $amount) {
-            $focusParts = explode('-', $focus);
+            $focusParts = preg_split('/[-=]/', $focus);
+
+            if (!$focusParts) {
+                continue;
+            }
 
             foreach ($focusParts as $index => $focusPart) {
                 $this->driver->wait(10, 500)->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id('regbtn_' . $focusPart . '_' . $index + 1)));
