@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
-namespace BVP\Purchaser;
+namespace BVP\Purchaser\Contracts;
 
+use BVP\Purchaser\Receipt;
 use DateTimeInterface;
 
 /**
  * @author shimomo
  */
-interface PurchaserCoreInterface
+interface PurchaserCore
 {
     /**
      * @psalm-param int<1000, max> $maxDepositAmount
@@ -18,7 +19,7 @@ interface PurchaserCoreInterface
      * @param int $maxDepositAmount
      * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setMaxDepositAmount(int $maxDepositAmount): PurchaserCore;
+    public function setMaxDepositAmount(int $maxDepositAmount): \BVP\Purchaser\PurchaserCore;
 
     /**
      * @psalm-param int<100, max> $maxTotalAmount
@@ -27,7 +28,7 @@ interface PurchaserCoreInterface
      * @param int $maxTotalAmount
      * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setMaxTotalAmount(int $maxTotalAmount): PurchaserCore;
+    public function setMaxTotalAmount(int $maxTotalAmount): \BVP\Purchaser\PurchaserCore;
 
     /**
      * @psalm-param non-empty-string $subscriberNumber
@@ -36,7 +37,7 @@ interface PurchaserCoreInterface
      * @param string $subscriberNumber
      * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setSubscriberNumber(string $subscriberNumber): PurchaserCore;
+    public function setSubscriberNumber(string $subscriberNumber): \BVP\Purchaser\PurchaserCore;
 
     /**
      * @psalm-param non-empty-string $personalIdentificationNumber
@@ -45,7 +46,7 @@ interface PurchaserCoreInterface
      * @param string $personalIdentificationNumber
      * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setPersonalIdentificationNumber(string $personalIdentificationNumber): PurchaserCore;
+    public function setPersonalIdentificationNumber(string $personalIdentificationNumber): \BVP\Purchaser\PurchaserCore;
 
     /**
      * @psalm-param non-empty-string $authenticationPassword
@@ -54,7 +55,7 @@ interface PurchaserCoreInterface
      * @param string $authenticationPassword
      * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setAuthenticationPassword(string $authenticationPassword): PurchaserCore;
+    public function setAuthenticationPassword(string $authenticationPassword): \BVP\Purchaser\PurchaserCore;
 
     /**
      * @psalm-param non-empty-string $purchasePassword
@@ -63,7 +64,7 @@ interface PurchaserCoreInterface
      * @param string $purchasePassword
      * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setPurchasePassword(string $purchasePassword): PurchaserCore;
+    public function setPurchasePassword(string $purchasePassword): \BVP\Purchaser\PurchaserCore;
 
     /**
      * @psalm-param ?\DateTimeInterface $deadline
@@ -74,7 +75,7 @@ interface PurchaserCoreInterface
      * @param int $marginSeconds
      * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setDeadline(?DateTimeInterface $deadline, int $marginSeconds = 5): PurchaserCore;
+    public function setDeadline(?DateTimeInterface $deadline, int $marginSeconds = 5): \BVP\Purchaser\PurchaserCore;
 
     /**
      * @psalm-param ?non-empty-string $artifactDirectory
@@ -83,7 +84,7 @@ interface PurchaserCoreInterface
      * @param ?string $artifactDirectory
      * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setArtifactDirectory(?string $artifactDirectory): PurchaserCore;
+    public function setArtifactDirectory(?string $artifactDirectory): \BVP\Purchaser\PurchaserCore;
 
     /**
      * @psalm-param non-empty-string $lockPath
@@ -92,7 +93,7 @@ interface PurchaserCoreInterface
      * @param string $lockPath
      * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setLockPath(string $lockPath): PurchaserCore;
+    public function setLockPath(string $lockPath): \BVP\Purchaser\PurchaserCore;
 
     /**
      * @psalm-return int
@@ -108,7 +109,7 @@ interface PurchaserCoreInterface
      * @param int $required
      * @return int
      */
-    public function ensureBalance(int $required = PurchaserCore::DEFAULT_TARGET_BALANCE): int;
+    public function ensureBalance(int $required = \BVP\Purchaser\PurchaserCore::DEFAULT_TARGET_BALANCE): int;
 
     /**
      * @psalm-param int $stadiumNumber

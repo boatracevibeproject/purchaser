@@ -20,7 +20,7 @@
         "source": "https://github.com/shimomo/bvp-purchaser"
     },
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "php-webdriver/webdriver": "^1.9"
     },
     "require-dev": {

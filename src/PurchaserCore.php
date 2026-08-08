@@ -17,7 +17,7 @@ use Throwable;
 /**
  * @author shimomo
  */
-final class PurchaserCore implements PurchaserCoreInterface
+final class PurchaserCore implements Contracts\PurchaserCore
 {
     /**
      * 朝に満たしておく残高の既定値（円）。

@@ -33,21 +33,21 @@ namespace BVP\Purchaser;
  *
  * @author shimomo
  */
-final class Purchaser implements PurchaserInterface
+final class Purchaser implements Contracts\Purchaser
 {
     /**
-     * @psalm-var ?\BVP\Purchaser\PurchaserInterface
+     * @psalm-var ?\BVP\Purchaser\Contracts\Purchaser
      *
-     * @var ?\BVP\Purchaser\PurchaserInterface
+     * @var ?\BVP\Purchaser\Contracts\Purchaser
      */
-    private static ?PurchaserInterface $instance = null;
+    private static ?Contracts\Purchaser $instance = null;
 
     /**
-     * @psalm-param \BVP\Purchaser\PurchaserCoreInterface $purchaser
+     * @psalm-param \BVP\Purchaser\Contracts\PurchaserCore $purchaser
      *
-     * @param \BVP\Purchaser\PurchaserCoreInterface $purchaser
+     * @param \BVP\Purchaser\Contracts\PurchaserCore $purchaser
      */
-    public function __construct(private readonly PurchaserCoreInterface $purchaser)
+    public function __construct(private readonly Contracts\PurchaserCore $purchaser)
     {
         //
     }
@@ -81,34 +81,34 @@ final class Purchaser implements PurchaserInterface
     }
 
     /**
-     * @psalm-param ?\BVP\Purchaser\PurchaserCoreInterface $purchaserCore
+     * @psalm-param ?\BVP\Purchaser\Contracts\PurchaserCore $purchaserCore
      * @psalm-param ?non-empty-string $seleniumServerUrl
      * @psalm-param ?int<1000, max> $maxDepositAmount
      * @psalm-param ?non-empty-string $subscriberNumber
      * @psalm-param ?non-empty-string $personalIdentificationNumber
      * @psalm-param ?non-empty-string $authenticationPassword
      * @psalm-param ?non-empty-string $purchasePassword
-     * @psalm-return \BVP\Purchaser\PurchaserInterface
+     * @psalm-return \BVP\Purchaser\Contracts\Purchaser
      *
-     * @param ?\BVP\Purchaser\PurchaserCoreInterface $purchaserCore
+     * @param ?\BVP\Purchaser\Contracts\PurchaserCore $purchaserCore
      * @param ?string $seleniumServerUrl
      * @param ?int $maxDepositAmount
      * @param ?string $subscriberNumber
      * @param ?string $personalIdentificationNumber
      * @param ?string $authenticationPassword
      * @param ?string $purchasePassword
-     * @return \BVP\Purchaser\PurchaserInterface
+     * @return \BVP\Purchaser\Contracts\Purchaser
      */
     #[\Override]
     public static function getInstance(
-        ?PurchaserCoreInterface $purchaserCore = null,
+        ?Contracts\PurchaserCore $purchaserCore = null,
         ?string $seleniumServerUrl = null,
         ?int $maxDepositAmount = PurchaserCore::DEFAULT_MAX_DEPOSIT_AMOUNT,
         #[\SensitiveParameter] ?string $subscriberNumber = null,
         #[\SensitiveParameter] ?string $personalIdentificationNumber = null,
         #[\SensitiveParameter] ?string $authenticationPassword = null,
         #[\SensitiveParameter] ?string $purchasePassword = null
-    ): PurchaserInterface {
+    ): Contracts\Purchaser {
         return self::$instance ??= new self(
             $purchaserCore ?? new PurchaserCore(
                 $seleniumServerUrl,
@@ -122,34 +122,34 @@ final class Purchaser implements PurchaserInterface
     }
 
     /**
-     * @psalm-param ?\BVP\Purchaser\PurchaserCoreInterface $purchaserCore
+     * @psalm-param ?\BVP\Purchaser\Contracts\PurchaserCore $purchaserCore
      * @psalm-param ?non-empty-string $seleniumServerUrl
      * @psalm-param ?int<1000, max> $maxDepositAmount
      * @psalm-param ?non-empty-string $subscriberNumber
      * @psalm-param ?non-empty-string $personalIdentificationNumber
      * @psalm-param ?non-empty-string $authenticationPassword
      * @psalm-param ?non-empty-string $purchasePassword
-     * @psalm-return \BVP\Purchaser\PurchaserInterface
+     * @psalm-return \BVP\Purchaser\Contracts\Purchaser
      *
-     * @param ?\BVP\Purchaser\PurchaserCoreInterface $purchaserCore
+     * @param ?\BVP\Purchaser\Contracts\PurchaserCore $purchaserCore
      * @param ?string $seleniumServerUrl
      * @param ?int $maxDepositAmount
      * @param ?string $subscriberNumber
      * @param ?string $personalIdentificationNumber
      * @param ?string $authenticationPassword
      * @param ?string $purchasePassword
-     * @return \BVP\Purchaser\PurchaserInterface
+     * @return \BVP\Purchaser\Contracts\Purchaser
      */
     #[\Override]
     public static function createInstance(
-        ?PurchaserCoreInterface $purchaserCore = null,
+        ?Contracts\PurchaserCore $purchaserCore = null,
         ?string $seleniumServerUrl = null,
         ?int $maxDepositAmount = PurchaserCore::DEFAULT_MAX_DEPOSIT_AMOUNT,
         #[\SensitiveParameter] ?string $subscriberNumber = null,
         #[\SensitiveParameter] ?string $personalIdentificationNumber = null,
         #[\SensitiveParameter] ?string $authenticationPassword = null,
         #[\SensitiveParameter] ?string $purchasePassword = null
-    ): PurchaserInterface {
+    ): Contracts\Purchaser {
         return self::$instance = new self(
             $purchaserCore ?? new PurchaserCore(
                 $seleniumServerUrl,
