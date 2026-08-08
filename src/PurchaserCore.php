@@ -70,62 +70,37 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
     private const LOCATOR_BALANCE = '.gray > .col3';
 
-    /**
-     * @psalm-var ?\Facebook\WebDriver\Remote\RemoteWebDriver
-     *
-     * @var ?\Facebook\WebDriver\Remote\RemoteWebDriver
-     */
     private ?RemoteWebDriver $driver = null;
 
-    /**
-     * @psalm-var ?\DateTimeInterface
-     *
-     * @var ?\DateTimeInterface
-     */
     private ?DateTimeInterface $deadline = null;
 
     /**
-     * @psalm-var int<0, max>
-     *
-     * @var int
+     * @var int<0, max>
      */
     private int $deadlineMarginSeconds = 5;
 
     /**
-     * @psalm-var ?non-empty-string
-     *
-     * @var ?string
+     * @var ?non-empty-string
      */
     private ?string $artifactDirectory = null;
 
     /**
-     * @psalm-var non-empty-string
-     *
-     * @var string
+     * @var non-empty-string
      */
     private string $lockPath;
 
     /**
-     * @psalm-var array<string, int>
-     *
-     * @var array
+     * @var array<string, int>
      */
     private array $stepMilliseconds = [];
 
     /**
-     * @psalm-param ?non-empty-string $seleniumServerUrl
-     * @psalm-param ?int<1000, max> $maxDepositAmount
-     * @psalm-param ?non-empty-string $subscriberNumber
-     * @psalm-param ?non-empty-string $personalIdentificationNumber
-     * @psalm-param ?non-empty-string $authenticationPassword
-     * @psalm-param ?non-empty-string $purchasePassword
-     *
-     * @param ?string $seleniumServerUrl
-     * @param ?int $maxDepositAmount 1回の入金指示の上限
-     * @param ?string $subscriberNumber
-     * @param ?string $personalIdentificationNumber
-     * @param ?string $authenticationPassword
-     * @param ?string $purchasePassword
+     * @param  ?non-empty-string  $seleniumServerUrl
+     * @param  ?int<1000, max>  $maxDepositAmount  1回の入金指示の上限
+     * @param  ?non-empty-string  $subscriberNumber
+     * @param  ?non-empty-string  $personalIdentificationNumber
+     * @param  ?non-empty-string  $authenticationPassword
+     * @param  ?non-empty-string  $purchasePassword
      */
     public function __construct(
         private ?string $seleniumServerUrl = null,
@@ -136,12 +111,10 @@ final class PurchaserCore implements Contracts\PurchaserCore
         #[\SensitiveParameter] private ?string $purchasePassword = null,
         private ?int $maxTotalAmount = self::DEFAULT_MAX_TOTAL_AMOUNT
     ) {
-        $this->lockPath = sys_get_temp_dir() . '/bvp-purchaser.lock';
+        $this->lockPath = sys_get_temp_dir().'/bvp-purchaser.lock';
     }
 
     /**
-     * @psalm-return void
-     *
      * @return void
      */
     public function __destruct()
@@ -150,11 +123,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @psalm-param int<1000, max> $maxDepositAmount
-     * @psalm-return \BVP\Purchaser\PurchaserCore
-     *
-     * @param int $maxDepositAmount
-     * @return \BVP\Purchaser\PurchaserCore
+     * @param  int<1000, max>  $maxDepositAmount
      */
     #[\Override]
     public function setMaxDepositAmount(int $maxDepositAmount): PurchaserCore
@@ -165,11 +134,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @psalm-param int<100, max> $maxTotalAmount
-     * @psalm-return \BVP\Purchaser\PurchaserCore
-     *
-     * @param int $maxTotalAmount
-     * @return \BVP\Purchaser\PurchaserCore
+     * @param  int<100, max>  $maxTotalAmount
      */
     #[\Override]
     public function setMaxTotalAmount(int $maxTotalAmount): PurchaserCore
@@ -180,11 +145,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @psalm-param non-empty-string $subscriberNumber
-     * @psalm-return \BVP\Purchaser\PurchaserCore
-     *
-     * @param string $subscriberNumber
-     * @return \BVP\Purchaser\PurchaserCore
+     * @param  non-empty-string  $subscriberNumber
      */
     #[\Override]
     public function setSubscriberNumber(#[\SensitiveParameter] string $subscriberNumber): PurchaserCore
@@ -195,11 +156,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @psalm-param non-empty-string $personalIdentificationNumber
-     * @psalm-return \BVP\Purchaser\PurchaserCore
-     *
-     * @param string $personalIdentificationNumber
-     * @return \BVP\Purchaser\PurchaserCore
+     * @param  non-empty-string  $personalIdentificationNumber
      */
     #[\Override]
     public function setPersonalIdentificationNumber(
@@ -211,11 +168,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @psalm-param non-empty-string $authenticationPassword
-     * @psalm-return \BVP\Purchaser\PurchaserCore
-     *
-     * @param string $authenticationPassword
-     * @return \BVP\Purchaser\PurchaserCore
+     * @param  non-empty-string  $authenticationPassword
      */
     #[\Override]
     public function setAuthenticationPassword(#[\SensitiveParameter] string $authenticationPassword): PurchaserCore
@@ -226,11 +179,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @psalm-param non-empty-string $purchasePassword
-     * @psalm-return \BVP\Purchaser\PurchaserCore
-     *
-     * @param string $purchasePassword
-     * @return \BVP\Purchaser\PurchaserCore
+     * @param  non-empty-string  $purchasePassword
      */
     #[\Override]
     public function setPurchasePassword(#[\SensitiveParameter] string $purchasePassword): PurchaserCore
@@ -246,13 +195,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * 締切をまたいで submit すると、弾かれるか最悪は次のレースに入る。
      * 入金だけ済んで投票していない状態（残高に残るだけ）に倒すのが安全側。
      *
-     * @psalm-param ?\DateTimeInterface $deadline
-     * @psalm-param int<0, max> $marginSeconds
-     * @psalm-return \BVP\Purchaser\PurchaserCore
-     *
-     * @param ?\DateTimeInterface $deadline
-     * @param int $marginSeconds
-     * @return \BVP\Purchaser\PurchaserCore
+     * @param  int<0, max>  $marginSeconds
      */
     #[\Override]
     public function setDeadline(?DateTimeInterface $deadline, int $marginSeconds = 5): PurchaserCore
@@ -268,11 +211,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
      *
      * 一発勝負で再現できないので、無人運転するなら必ず設定すること。
      *
-     * @psalm-param ?non-empty-string $artifactDirectory
-     * @psalm-return \BVP\Purchaser\PurchaserCore
-     *
-     * @param ?string $artifactDirectory
-     * @return \BVP\Purchaser\PurchaserCore
+     * @param  ?non-empty-string  $artifactDirectory
      */
     #[\Override]
     public function setArtifactDirectory(?string $artifactDirectory): PurchaserCore
@@ -283,11 +222,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @psalm-param non-empty-string $lockPath
-     * @psalm-return \BVP\Purchaser\PurchaserCore
-     *
-     * @param string $lockPath
-     * @return \BVP\Purchaser\PurchaserCore
+     * @param  non-empty-string  $lockPath
      */
     #[\Override]
     public function setLockPath(string $lockPath): PurchaserCore
@@ -299,15 +234,11 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
     /**
      * 残高照会のみ。投票も入金もしない。
-     *
-     * @psalm-return int
-     *
-     * @return int
      */
     #[\Override]
     public function balance(): int
     {
-        /** @psalm-var int */
+        /** @var int */
         return $this->withSession(fn (): int => $this->fetchBalance(), 'balance');
     }
 
@@ -325,35 +256,23 @@ final class PurchaserCore implements Contracts\PurchaserCore
      *
      * 残高が既に足りていれば手順3を飛ばす。このとき手順2の照会が手順4の確認を兼ねる。
      *
-     * @psalm-param int $required
-     * @psalm-return int
-     *
-     * @param int $required
      * @return int 最終的な残高
      *
-     * @throws \BVP\Purchaser\PurchaserException
+     * @throws PurchaserException
      */
     #[\Override]
     public function ensureBalance(int $required = self::DEFAULT_TARGET_BALANCE): int
     {
-        /** @psalm-var int */
+        /** @var int */
         return $this->withSession(fn (): int => $this->ensureBalanceInSession($required), 'ensure-balance');
     }
 
     /**
-     * @psalm-param int $stadiumNumber
-     * @psalm-param int $number
-     * @psalm-param int $type
-     * @psalm-param non-empty-array<array-key, int> $focuses
-     * @psalm-return \BVP\Purchaser\Receipt
+     * @param  int  $number  レース番号（1〜12）
+     * @param  int  $type  賭式（単勝 => 1, 複勝 => 2, 2連単 => 3, 2連複 => 4, 拡連複 => 5, 3連単 => 6, 3連複 => 7）
+     * @param  non-empty-array<array-key, int>  $focuses  組番 => 購入金額
      *
-     * @param int $stadiumNumber
-     * @param int $number レース番号（1〜12）
-     * @param int $type 賭式（単勝 => 1, 複勝 => 2, 2連単 => 3, 2連複 => 4, 拡連複 => 5, 3連単 => 6, 3連複 => 7）
-     * @param array $focuses 組番 => 購入金額
-     * @return \BVP\Purchaser\Receipt
-     *
-     * @throws \BVP\Purchaser\PurchaserException
+     * @throws PurchaserException
      */
     #[\Override]
     public function purchase(int $stadiumNumber, int $number, int $type, array $focuses): Receipt
@@ -377,7 +296,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
         $this->assertDeadline('purchase の開始');
 
-        /** @psalm-var \BVP\Purchaser\Receipt */
+        /** @var Receipt */
         return $this->withSession(
             function () use ($stadiumNumber, $number, $slip): Receipt {
                 // 入金と反映待ちを投票の前に置き切る。ここを抜けた時点で残高は足りている。
@@ -393,14 +312,6 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * 残高を $required 円まで満たすのに必要な入金額（1,000円単位に切り上げ）。
      *
      * 足りていれば 0 を返す。ブラウザに依存しないので単体テストできる。
-     *
-     * @psalm-param int $balance
-     * @psalm-param int $required
-     * @psalm-return int
-     *
-     * @param int $balance
-     * @param int $required
-     * @return int
      */
     public static function requiredDepositAmount(int $balance, int $required): int
     {
@@ -416,13 +327,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
     /**
      * ロックを取り、ログインし、後始末までを面倒みる。
      *
-     * @psalm-param callable(): mixed $callback
-     * @psalm-param non-empty-string $context
-     * @psalm-return mixed
-     *
-     * @param callable $callback
-     * @param string $context
-     * @return mixed
+     * @param  callable(): mixed  $callback
+     * @param  non-empty-string  $context
      */
     private function withSession(callable $callback, string $context): mixed
     {
@@ -444,7 +350,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
             }
 
             throw new PurchaserException(
-                "{$context} に失敗しました。" . $exception->getMessage(),
+                "{$context} に失敗しました。".$exception->getMessage(),
                 (int) $exception->getCode(),
                 $exception
             );
@@ -454,11 +360,6 @@ final class PurchaserCore implements Contracts\PurchaserCore
         }
     }
 
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
     private function login(): void
     {
         $started = microtime(true);
@@ -482,7 +383,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
         } catch (Throwable $exception) {
             throw new PurchaserException(
                 'ログイン後の投票ウィンドウが開きませんでした。'
-                . '加入者番号・暗証番号・認証用パスワードの誤り、メンテナンス、多重ログインを疑ってください。',
+                .'加入者番号・暗証番号・認証用パスワードの誤り、メンテナンス、多重ログインを疑ってください。',
                 0,
                 $exception
             );
@@ -507,10 +408,6 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * 時間切れで TimeoutException を投げる。旧実装が NoSuchElementException を
      * catch していたのは効いておらず、ダイアログが無い日は 10 秒待った末に
      * 購入全体が中断していた。
-     *
-     * @psalm-return void
-     *
-     * @return void
      */
     private function dismissNewsDialog(): void
     {
@@ -524,13 +421,6 @@ final class PurchaserCore implements Contracts\PurchaserCore
         }
     }
 
-    /**
-     * @psalm-param int $required
-     * @psalm-return int
-     *
-     * @param int $required
-     * @return int
-     */
     private function ensureBalanceInSession(int $required): int
     {
         $started = microtime(true);
@@ -547,7 +437,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
         if ($this->maxDepositAmount !== null && $deposit > $this->maxDepositAmount) {
             throw new PurchaserException(
                 "必要な入金額 {$deposit} 円が上限 {$this->maxDepositAmount} 円を超えています。"
-                . "残高 {$balance} 円 / 必要 {$required} 円"
+                ."残高 {$balance} 円 / 必要 {$required} 円"
             );
         }
 
@@ -558,12 +448,12 @@ final class PurchaserCore implements Contracts\PurchaserCore
         $attempts = 0;
 
         while (($balance = $this->fetchBalance()) < $required) {
-            ++$attempts;
+            $attempts++;
 
             if (microtime(true) >= $deadline) {
                 throw new PurchaserException(
                     "入金が残高に反映されませんでした。残高 {$balance} 円 / 必要 {$required} 円 / "
-                    . "入金指示 {$deposit} 円 / 再照会 {$attempts} 回"
+                    ."入金指示 {$deposit} 円 / 再照会 {$attempts} 回"
                 );
             }
 
@@ -575,13 +465,6 @@ final class PurchaserCore implements Contracts\PurchaserCore
         return $balance;
     }
 
-    /**
-     * @psalm-param int $amount
-     * @psalm-return void
-     *
-     * @param int $amount
-     * @return void
-     */
     private function executeCharge(int $amount): void
     {
         $started = microtime(true);
@@ -605,11 +488,6 @@ final class PurchaserCore implements Contracts\PurchaserCore
         $this->recordStep('charge', $started);
     }
 
-    /**
-     * @psalm-return int
-     *
-     * @return int
-     */
     private function fetchBalance(): int
     {
         $this->waitClickable(WebDriverBy::id('gnavi02'))->click();
@@ -624,35 +502,23 @@ final class PurchaserCore implements Contracts\PurchaserCore
         // ここで 0 を返すと「入金が反映されない」と誤診断するので、別の失敗として扱う。
         if ($digits === null || $digits === '') {
             throw new PurchaserException(
-                '残高照会の解釈に失敗しました。セレクタ ' . self::LOCATOR_BALANCE . " の取得値: 「{$text}」"
+                '残高照会の解釈に失敗しました。セレクタ '.self::LOCATOR_BALANCE." の取得値: 「{$text}」"
             );
         }
 
         return (int) $digits;
     }
 
-    /**
-     * @psalm-param int $stadiumNumber
-     * @psalm-param int $number
-     * @psalm-param int $balanceBefore
-     * @psalm-return \BVP\Purchaser\Receipt
-     *
-     * @param int $stadiumNumber
-     * @param int $number
-     * @param \BVP\Purchaser\BetSlip $slip
-     * @param int $balanceBefore
-     * @return \BVP\Purchaser\Receipt
-     */
     private function placeBets(int $stadiumNumber, int $number, BetSlip $slip, int $balanceBefore): Receipt
     {
         $started = microtime(true);
         $this->assertDeadline('レースの選択');
 
-        $this->waitClickable(WebDriverBy::id('jyo' . sprintf('%02d', $stadiumNumber)))->click();
-        $this->waitClickable(WebDriverBy::id('selRaceNo' . sprintf('%02d', $number)))->click();
+        $this->waitClickable(WebDriverBy::id('jyo'.sprintf('%02d', $stadiumNumber)))->click();
+        $this->waitClickable(WebDriverBy::id('selRaceNo'.sprintf('%02d', $number)))->click();
         $this->assertRaceNumber($number);
 
-        $this->waitClickable(WebDriverBy::id('betkati' . $slip->betType))->click();
+        $this->waitClickable(WebDriverBy::id('betkati'.$slip->betType))->click();
         $this->waitClickable(WebDriverBy::id('betway1'))->click();
         $this->recordStep('select-race', $started);
 
@@ -660,7 +526,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
         foreach ($slip->bets as $bet) {
             foreach ($bet['legs'] as $index => $leg) {
-                $this->waitClickable(WebDriverBy::id('regbtn_' . $leg . '_' . ($index + 1)))->click();
+                $this->waitClickable(WebDriverBy::id('regbtn_'.$leg.'_'.($index + 1)))->click();
             }
 
             // 購入金額は100円単位で入力する。
@@ -693,7 +559,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
         } catch (Throwable $exception) {
             throw new PurchaserException(
                 '投票の確定に失敗しました。合計金額の不一致、残高不足、締切超過を疑ってください。'
-                . "合計 {$slip->totalAmount} 円 / {$slip->count()} 点 / 投票直前の残高 {$balanceBefore} 円",
+                ."合計 {$slip->totalAmount} 円 / {$slip->count()} 点 / 投票直前の残高 {$balanceBefore} 円",
                 0,
                 $exception
             );
@@ -708,33 +574,26 @@ final class PurchaserCore implements Contracts\PurchaserCore
             $slip->bets,
             $slip->totalAmount,
             $balanceBefore,
-            new DateTimeImmutable(),
+            new DateTimeImmutable,
             (int) round((microtime(true) - $started) * 1000.0),
             $this->stepMilliseconds,
             $confirmation
         );
     }
 
-    /**
-     * @psalm-param int $number
-     * @psalm-return void
-     *
-     * @param int $number
-     * @return void
-     */
     private function assertRaceNumber(int $number): void
     {
         try {
             $this->driver()->wait(self::WAIT_TIMEOUT_SECONDS, self::WAIT_INTERVAL_MILLISECONDS)->until(
                 WebDriverExpectedCondition::elementTextContains(
                     WebDriverBy::xpath(self::LOCATOR_RACE_NUMBER),
-                    $number . 'R'
+                    $number.'R'
                 )
             );
         } catch (Throwable $exception) {
             throw new PurchaserException(
                 "投票画面が {$number}R であることを確認できませんでした。"
-                . '繰り上がり、または画面構造の変化を疑ってください。',
+                .'繰り上がり、または画面構造の変化を疑ってください。',
                 0,
                 $exception
             );
@@ -742,11 +601,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @psalm-param non-empty-string $step
-     * @psalm-return void
-     *
-     * @param string $step
-     * @return void
+     * @param  non-empty-string  $step
      */
     private function assertDeadline(string $step): void
     {
@@ -759,16 +614,11 @@ final class PurchaserCore implements Contracts\PurchaserCore
         if ($remaining <= $this->deadlineMarginSeconds) {
             throw new PurchaserException(
                 "締切まで残り {$remaining} 秒のため {$step} を中止しました。"
-                . "（下限 {$this->deadlineMarginSeconds} 秒）"
+                ."（下限 {$this->deadlineMarginSeconds} 秒）"
             );
         }
     }
 
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
     private function assertCredentials(): void
     {
         $missing = [];
@@ -790,18 +640,14 @@ final class PurchaserCore implements Contracts\PurchaserCore
         }
 
         if ($missing !== []) {
-            throw new PurchaserException('会員情報が設定されていません: ' . implode('、', $missing));
+            throw new PurchaserException('会員情報が設定されていません: '.implode('、', $missing));
         }
     }
 
     /**
      * 一発勝負で再現できないので、失敗時の画面を必ず残す。
      *
-     * @psalm-param non-empty-string $context
-     * @psalm-return void
-     *
-     * @param string $context
-     * @return void
+     * @param  non-empty-string  $context
      */
     private function captureArtifacts(string $context): void
     {
@@ -814,19 +660,14 @@ final class PurchaserCore implements Contracts\PurchaserCore
                 mkdir($this->artifactDirectory, 0o755, true);
             }
 
-            $prefix = $this->artifactDirectory . '/' . date('Ymd-His') . '-' . $context;
-            $this->driver->takeScreenshot($prefix . '.png');
-            file_put_contents($prefix . '.html', $this->driver->getPageSource());
+            $prefix = $this->artifactDirectory.'/'.date('Ymd-His').'-'.$context;
+            $this->driver->takeScreenshot($prefix.'.png');
+            file_put_contents($prefix.'.html', $this->driver->getPageSource());
         } catch (Throwable $exception) {
             // 証跡の保存に失敗しても、元の例外を握り潰さない。
         }
     }
 
-    /**
-     * @psalm-return \Facebook\WebDriver\Remote\RemoteWebDriver
-     *
-     * @return \Facebook\WebDriver\Remote\RemoteWebDriver
-     */
     private function driver(): RemoteWebDriver
     {
         // コンストラクタで張ると、DI コンテナに登録しただけでブラウザが起動する。
@@ -836,14 +677,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
         );
     }
 
-    /**
-     * @psalm-return \Facebook\WebDriver\Remote\DesiredCapabilities
-     *
-     * @return \Facebook\WebDriver\Remote\DesiredCapabilities
-     */
     private function capabilities(): DesiredCapabilities
     {
-        $options = new ChromeOptions();
+        $options = new ChromeOptions;
         $options->addArguments([
             '--headless=new',
             '--disable-gpu',
@@ -860,13 +696,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @psalm-param \Facebook\WebDriver\WebDriverBy $by
-     * @psalm-param ?int<1, max> $timeout
-     * @psalm-return \Facebook\WebDriver\Remote\RemoteWebElement
-     *
-     * @param \Facebook\WebDriver\WebDriverBy $by
-     * @param ?int $timeout
-     * @return \Facebook\WebDriver\Remote\RemoteWebElement
+     * @param  ?int<1, max>  $timeout
      */
     private function waitVisible(WebDriverBy $by, ?int $timeout = null): RemoteWebElement
     {
@@ -877,13 +707,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @psalm-param \Facebook\WebDriver\WebDriverBy $by
-     * @psalm-param ?int<1, max> $timeout
-     * @psalm-return \Facebook\WebDriver\Remote\RemoteWebElement
-     *
-     * @param \Facebook\WebDriver\WebDriverBy $by
-     * @param ?int $timeout
-     * @return \Facebook\WebDriver\Remote\RemoteWebElement
+     * @param  ?int<1, max>  $timeout
      */
     private function waitClickable(WebDriverBy $by, ?int $timeout = null): RemoteWebElement
     {
@@ -897,13 +721,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * 待機条件は要素そのものを返すので、直後に findElement を撃ち直さない。
      * 往復が半分になるうえ、待機と取得の間に要素が差し替わる隙も消える。
      *
-     * @psalm-param ?int<1, max> $timeout
-     * @psalm-param \Facebook\WebDriver\WebDriverExpectedCondition $condition
-     * @psalm-return \Facebook\WebDriver\Remote\RemoteWebElement
-     *
-     * @param ?int $timeout
-     * @param \Facebook\WebDriver\WebDriverExpectedCondition $condition
-     * @return \Facebook\WebDriver\Remote\RemoteWebElement
+     * @param  ?int<1, max>  $timeout
      */
     private function awaited(?int $timeout, WebDriverExpectedCondition $condition): RemoteWebElement
     {
@@ -919,24 +737,13 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @psalm-param non-empty-string $step
-     * @psalm-param float $startedAt
-     * @psalm-return void
-     *
-     * @param string $step
-     * @param float $startedAt
-     * @return void
+     * @param  non-empty-string  $step
      */
     private function recordStep(string $step, float $startedAt): void
     {
         $this->stepMilliseconds[$step] = (int) round((microtime(true) - $startedAt) * 1000.0);
     }
 
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
     private function closeSession(): void
     {
         if ($this->driver === null) {

@@ -15,11 +15,7 @@ namespace BVP\Purchaser\Tests;
 trait TeleboatCredentials
 {
     /**
-     * @psalm-param non-empty-string $variable
-     * @psalm-return void
-     *
-     * @param string $variable
-     * @return void
+     * @param  non-empty-string  $variable
      */
     private function requireOptIn(string $variable): void
     {
@@ -42,11 +38,8 @@ trait TeleboatCredentials
     }
 
     /**
-     * @psalm-param non-empty-string $name
-     * @psalm-return non-empty-string
-     *
-     * @param string $name
-     * @return string
+     * @param  non-empty-string  $name
+     * @return non-empty-string
      */
     private function credential(string $name): string
     {

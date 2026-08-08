@@ -1,4 +1,4 @@
-name: psalm
+name: lint
 
 on:
   push:
@@ -13,15 +13,13 @@ permissions:
   contents: read
 
 jobs:
-  psalm:
-    name: Psalm Static Analysis on PHP ${{ matrix.php-version }} (Ubuntu 24.04)
+  lint:
+    name: Pint on PHP ${{ matrix.php-version }} (Ubuntu 24.04)
     runs-on: ubuntu-24.04
     strategy:
       matrix:
         php-version:
           - '8.3'
-          - '8.4'
-          - '8.5'
     steps:
       - name: Setup PHP ${{ matrix.php-version }}
         uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f
@@ -35,5 +33,5 @@ jobs:
       - name: Install Dependencies
         run: composer install --prefer-dist --no-interaction --no-progress --dev
 
-      - name: Run Psalm
-        run: vendor/bin/psalm --config=psalm.xml.dist --show-info=true
+      - name: Run Pint
+        run: composer lint

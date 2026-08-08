@@ -17,24 +17,11 @@ use DateTimeImmutable;
 final readonly class Receipt
 {
     /**
-     * @psalm-param int $stadiumNumber
-     * @psalm-param int $raceNumber
-     * @psalm-param int $betType
-     * @psalm-param non-empty-list<array{legs: non-empty-list<string>, amount: int}> $bets
-     * @psalm-param int $totalAmount
-     * @psalm-param int $balanceBefore
-     * @psalm-param int $elapsedMilliseconds
-     *
-     * @param int $stadiumNumber
-     * @param int $raceNumber
-     * @param int $betType
-     * @param array $bets
-     * @param int $totalAmount
-     * @param int $balanceBefore 投票直前の残高
-     * @param \DateTimeImmutable $submittedAt
-     * @param int $elapsedMilliseconds purchase() 全体の所要時間
-     * @param array $stepMilliseconds ステップ名 => 所要時間（m2 に間に合うかの実測用）
-     * @param string $confirmationText 完了画面（thanksArea）のテキスト
+     * @param  non-empty-list<array{legs: non-empty-list<string>, amount: int}>  $bets
+     * @param  int  $balanceBefore  投票直前の残高
+     * @param  int  $elapsedMilliseconds  purchase() 全体の所要時間
+     * @param  array  $stepMilliseconds  ステップ名 => 所要時間（m2 に間に合うかの実測用）
+     * @param  string  $confirmationText  完了画面（thanksArea）のテキスト
      */
     public function __construct(
         public int $stadiumNumber,
@@ -52,9 +39,7 @@ final readonly class Receipt
     }
 
     /**
-     * @psalm-return array<string, mixed>
-     *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {

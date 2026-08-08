@@ -38,13 +38,8 @@ final readonly class BetSlip
     public const AMOUNT_UNIT = 100;
 
     /**
-     * @psalm-param int $betType
-     * @psalm-param non-empty-list<array{legs: non-empty-list<string>, amount: int}> $bets
-     * @psalm-param positive-int $totalAmount
-     *
-     * @param int $betType
-     * @param array $bets
-     * @param int $totalAmount
+     * @param  non-empty-list<array{legs: non-empty-list<string>, amount: int}>  $bets
+     * @param  positive-int  $totalAmount
      */
     private function __construct(
         public int $betType,
@@ -55,15 +50,9 @@ final readonly class BetSlip
     }
 
     /**
-     * @psalm-param array<array-key, mixed> $focuses
-     * @psalm-param int $betType
-     * @psalm-return \BVP\Purchaser\BetSlip
+     * @param  array<array-key, mixed>  $focuses  組番 => 購入金額
      *
-     * @param array $focuses 組番 => 購入金額
-     * @param int $betType
-     * @return \BVP\Purchaser\BetSlip
-     *
-     * @throws \BVP\Purchaser\PurchaserException
+     * @throws PurchaserException
      */
     public static function fromFocuses(array $focuses, int $betType): self
     {
@@ -130,9 +119,7 @@ final readonly class BetSlip
     /**
      * 買い目の点数。
      *
-     * @psalm-return positive-int
-     *
-     * @return int
+     * @return positive-int
      */
     public function count(): int
     {
@@ -142,13 +129,8 @@ final readonly class BetSlip
     /**
      * 着順を問わない賭式では 1=2 と 2=1 を同一視する。
      *
-     * @psalm-param non-empty-list<string> $legs
-     * @psalm-param int $betType
-     * @psalm-return non-empty-string
-     *
-     * @param array $legs
-     * @param int $betType
-     * @return string
+     * @param  non-empty-list<string>  $legs
+     * @return non-empty-string
      */
     private static function deduplicationKey(array $legs, int $betType): string
     {

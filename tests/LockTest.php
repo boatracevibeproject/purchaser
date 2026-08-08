@@ -13,29 +13,14 @@ use PHPUnit\Framework\TestCase as PHPUnitTestCase;
  */
 final class LockTest extends PHPUnitTestCase
 {
-    /**
-     * @psalm-var string
-     *
-     * @var string
-     */
     private string $path = '';
 
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
     #[\Override]
     protected function setUp(): void
     {
-        $this->path = sys_get_temp_dir() . '/bvp-purchaser-test-' . bin2hex(random_bytes(8)) . '.lock';
+        $this->path = sys_get_temp_dir().'/bvp-purchaser-test-'.bin2hex(random_bytes(8)).'.lock';
     }
 
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
     #[\Override]
     protected function tearDown(): void
     {
@@ -44,12 +29,7 @@ final class LockTest extends PHPUnitTestCase
         }
     }
 
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
-    public function testSecondAcquisitionFailsWhileTheFirstIsHeld(): void
+    public function test_second_acquisition_fails_while_the_first_is_held(): void
     {
         $first = new Lock($this->path);
         $first->acquire();
@@ -66,12 +46,7 @@ final class LockTest extends PHPUnitTestCase
         }
     }
 
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
-    public function testLockIsReusableAfterRelease(): void
+    public function test_lock_is_reusable_after_release(): void
     {
         $first = new Lock($this->path);
         $first->acquire();
@@ -84,12 +59,7 @@ final class LockTest extends PHPUnitTestCase
         $this->assertFileExists($this->path);
     }
 
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
-    public function testAcquireIsIdempotent(): void
+    public function test_acquire_is_idempotent(): void
     {
         $lock = new Lock($this->path);
         $lock->acquire();

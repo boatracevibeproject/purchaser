@@ -18,19 +18,10 @@ namespace BVP\Purchaser;
 final class Lock
 {
     /**
-     * @psalm-var ?resource
-     *
-     * @var mixed
+     * @var ?resource
      */
     private mixed $handle = null;
 
-    /**
-     * @psalm-param string $path
-     * @psalm-param float $timeoutSeconds
-     *
-     * @param string $path
-     * @param float $timeoutSeconds
-     */
     public function __construct(
         private readonly string $path,
         private readonly float $timeoutSeconds = 30.0
@@ -39,11 +30,7 @@ final class Lock
     }
 
     /**
-     * @psalm-return void
-     *
-     * @return void
-     *
-     * @throws \BVP\Purchaser\PurchaserException
+     * @throws PurchaserException
      */
     public function acquire(): void
     {
@@ -74,11 +61,6 @@ final class Lock
         $this->handle = $handle;
     }
 
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
     public function release(): void
     {
         if ($this->handle === null) {

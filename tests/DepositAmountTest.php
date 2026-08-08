@@ -14,23 +14,13 @@ use PHPUnit\Framework\TestCase as PHPUnitTestCase;
  */
 final class DepositAmountTest extends PHPUnitTestCase
 {
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
-    public function testNoDepositWhenBalanceIsSufficient(): void
+    public function test_no_deposit_when_balance_is_sufficient(): void
     {
         $this->assertSame(0, PurchaserCore::requiredDepositAmount(10000, 10000));
         $this->assertSame(0, PurchaserCore::requiredDepositAmount(12000, 10000));
     }
 
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
-    public function testShortfallIsRoundedUpToThousandYen(): void
+    public function test_shortfall_is_rounded_up_to_thousand_yen(): void
     {
         // 不足 10,000 円 → ちょうど 10,000 円
         $this->assertSame(10000, PurchaserCore::requiredDepositAmount(0, 10000));
@@ -47,12 +37,8 @@ final class DepositAmountTest extends PHPUnitTestCase
 
     /**
      * 入金後の残高が必要額を必ず満たすこと（切り上げの向きが逆でないこと）。
-     *
-     * @psalm-return void
-     *
-     * @return void
      */
-    public function testResultingBalanceAlwaysReachesRequired(): void
+    public function test_resulting_balance_always_reaches_required(): void
     {
         for ($balance = 0; $balance <= 12000; $balance += 137) {
             for ($required = 100; $required <= 12000; $required += 971) {
