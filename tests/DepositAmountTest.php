@@ -1,0 +1,66 @@
+<?php
+
+declare(strict_types=1);
+
+namespace BVP\Purchaser\Tests;
+
+use BVP\Purchaser\PurchaserCore;
+use PHPUnit\Framework\TestCase as PHPUnitTestCase;
+
+/**
+ * 「不足分だけ1,000円単位に切り上げて入金する」の計算部分。
+ *
+ * @author shimomo
+ */
+final class DepositAmountTest extends PHPUnitTestCase
+{
+    /**
+     * @psalm-return void
+     *
+     * @return void
+     */
+    public function testNoDepositWhenBalanceIsSufficient(): void
+    {
+        $this->assertSame(0, PurchaserCore::requiredDepositAmount(10000, 10000));
+        $this->assertSame(0, PurchaserCore::requiredDepositAmount(12000, 10000));
+    }
+
+    /**
+     * @psalm-return void
+     *
+     * @return void
+     */
+    public function testShortfallIsRoundedUpToThousandYen(): void
+    {
+        // 不足 10,000 円 → ちょうど 10,000 円
+        $this->assertSame(10000, PurchaserCore::requiredDepositAmount(0, 10000));
+
+        // 不足 1 円でも 1,000 円入金しないと単位に乗らない
+        $this->assertSame(1000, PurchaserCore::requiredDepositAmount(9999, 10000));
+
+        // 不足 2,300 円 → 3,000 円
+        $this->assertSame(3000, PurchaserCore::requiredDepositAmount(7700, 10000));
+
+        // 不足がちょうど単位なら切り上げない
+        $this->assertSame(2000, PurchaserCore::requiredDepositAmount(8000, 10000));
+    }
+
+    /**
+     * 入金後の残高が必要額を必ず満たすこと（切り上げの向きが逆でないこと）。
+     *
+     * @psalm-return void
+     *
+     * @return void
+     */
+    public function testResultingBalanceAlwaysReachesRequired(): void
+    {
+        for ($balance = 0; $balance <= 12000; $balance += 137) {
+            for ($required = 100; $required <= 12000; $required += 971) {
+                $deposit = PurchaserCore::requiredDepositAmount($balance, $required);
+
+                $this->assertSame(0, $deposit % 1000);
+                $this->assertGreaterThanOrEqual($required, $balance + $deposit);
+            }
+        }
+    }
+}

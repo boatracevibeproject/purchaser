@@ -5,17 +5,31 @@ declare(strict_types=1);
 namespace BVP\Purchaser;
 
 /**
- * @psalm-method static \BVP\Purchaser\PurchaserCore setDepositAmount(int $depositAmount)
+ * @psalm-method static \BVP\Purchaser\PurchaserCore setMaxDepositAmount(int $maxDepositAmount)
+ * @psalm-method static \BVP\Purchaser\PurchaserCore setMaxTotalAmount(int $maxTotalAmount)
  * @psalm-method static \BVP\Purchaser\PurchaserCore setSubscriberNumber(string $subscriberNumber)
+ * @psalm-method static \BVP\Purchaser\PurchaserCore setPersonalIdentificationNumber(string $personalIdentificationNumber)
  * @psalm-method static \BVP\Purchaser\PurchaserCore setAuthenticationPassword(string $authenticationPassword)
  * @psalm-method static \BVP\Purchaser\PurchaserCore setPurchasePassword(string $purchasePassword)
- * @psalm-method static void purchase(int $stadiumNumber, int $number, int $type, array $focuses)
+ * @psalm-method static \BVP\Purchaser\PurchaserCore setDeadline(?\DateTimeInterface $deadline, int $marginSeconds = 5)
+ * @psalm-method static \BVP\Purchaser\PurchaserCore setArtifactDirectory(?string $artifactDirectory)
+ * @psalm-method static \BVP\Purchaser\PurchaserCore setLockPath(string $lockPath)
+ * @psalm-method static int balance()
+ * @psalm-method static int ensureBalance(int $required = \BVP\Purchaser\PurchaserCore::DEFAULT_TARGET_BALANCE)
+ * @psalm-method static \BVP\Purchaser\Receipt purchase(int $stadiumNumber, int $number, int $type, array $focuses)
  *
- * @method static \BVP\Purchaser\PurchaserCore setDepositAmount(int $depositAmount)
+ * @method static \BVP\Purchaser\PurchaserCore setMaxDepositAmount(int $maxDepositAmount)
+ * @method static \BVP\Purchaser\PurchaserCore setMaxTotalAmount(int $maxTotalAmount)
  * @method static \BVP\Purchaser\PurchaserCore setSubscriberNumber(string $subscriberNumber)
+ * @method static \BVP\Purchaser\PurchaserCore setPersonalIdentificationNumber(string $personalIdentificationNumber)
  * @method static \BVP\Purchaser\PurchaserCore setAuthenticationPassword(string $authenticationPassword)
  * @method static \BVP\Purchaser\PurchaserCore setPurchasePassword(string $purchasePassword)
- * @method static void purchase(int $stadiumNumber, int $number, int $type, array $focuses)
+ * @method static \BVP\Purchaser\PurchaserCore setDeadline(?\DateTimeInterface $deadline, int $marginSeconds = 5)
+ * @method static \BVP\Purchaser\PurchaserCore setArtifactDirectory(?string $artifactDirectory)
+ * @method static \BVP\Purchaser\PurchaserCore setLockPath(string $lockPath)
+ * @method static int balance()
+ * @method static int ensureBalance(int $required = \BVP\Purchaser\PurchaserCore::DEFAULT_TARGET_BALANCE)
+ * @method static \BVP\Purchaser\Receipt purchase(int $stadiumNumber, int $number, int $type, array $focuses)
  *
  * @author shimomo
  */
@@ -26,7 +40,7 @@ final class Purchaser implements PurchaserInterface
      *
      * @var ?\BVP\Purchaser\PurchaserInterface
      */
-    private static ?PurchaserInterface $instance;
+    private static ?PurchaserInterface $instance = null;
 
     /**
      * @psalm-param \BVP\Purchaser\PurchaserCoreInterface $purchaser
@@ -69,7 +83,7 @@ final class Purchaser implements PurchaserInterface
     /**
      * @psalm-param ?\BVP\Purchaser\PurchaserCoreInterface $purchaserCore
      * @psalm-param ?non-empty-string $seleniumServerUrl
-     * @psalm-param ?int<1000, max> $depositAmount
+     * @psalm-param ?int<1000, max> $maxDepositAmount
      * @psalm-param ?non-empty-string $subscriberNumber
      * @psalm-param ?non-empty-string $personalIdentificationNumber
      * @psalm-param ?non-empty-string $authenticationPassword
@@ -78,7 +92,7 @@ final class Purchaser implements PurchaserInterface
      *
      * @param ?\BVP\Purchaser\PurchaserCoreInterface $purchaserCore
      * @param ?string $seleniumServerUrl
-     * @param ?int<1000, max> $depositAmount
+     * @param ?int $maxDepositAmount
      * @param ?string $subscriberNumber
      * @param ?string $personalIdentificationNumber
      * @param ?string $authenticationPassword
@@ -89,16 +103,16 @@ final class Purchaser implements PurchaserInterface
     public static function getInstance(
         ?PurchaserCoreInterface $purchaserCore = null,
         ?string $seleniumServerUrl = null,
-        ?int $depositAmount = null,
-        ?string $subscriberNumber = null,
-        ?string $personalIdentificationNumber = null,
-        ?string $authenticationPassword = null,
-        ?string $purchasePassword = null
+        ?int $maxDepositAmount = PurchaserCore::DEFAULT_MAX_DEPOSIT_AMOUNT,
+        #[\SensitiveParameter] ?string $subscriberNumber = null,
+        #[\SensitiveParameter] ?string $personalIdentificationNumber = null,
+        #[\SensitiveParameter] ?string $authenticationPassword = null,
+        #[\SensitiveParameter] ?string $purchasePassword = null
     ): PurchaserInterface {
         return self::$instance ??= new self(
             $purchaserCore ?? new PurchaserCore(
                 $seleniumServerUrl,
-                $depositAmount,
+                $maxDepositAmount,
                 $subscriberNumber,
                 $personalIdentificationNumber,
                 $authenticationPassword,
@@ -110,36 +124,36 @@ final class Purchaser implements PurchaserInterface
     /**
      * @psalm-param ?\BVP\Purchaser\PurchaserCoreInterface $purchaserCore
      * @psalm-param ?non-empty-string $seleniumServerUrl
-     * @psalm-param ?int<1000, max> $depositAmount
+     * @psalm-param ?int<1000, max> $maxDepositAmount
      * @psalm-param ?non-empty-string $subscriberNumber
      * @psalm-param ?non-empty-string $personalIdentificationNumber
      * @psalm-param ?non-empty-string $authenticationPassword
      * @psalm-param ?non-empty-string $purchasePassword
      * @psalm-return \BVP\Purchaser\PurchaserInterface
      *
-     * @param ?\BVP\Trimmer\PurchaserCoreInterface $purchaserCore
+     * @param ?\BVP\Purchaser\PurchaserCoreInterface $purchaserCore
      * @param ?string $seleniumServerUrl
-     * @param ?int<1000, max> $depositAmount
+     * @param ?int $maxDepositAmount
      * @param ?string $subscriberNumber
      * @param ?string $personalIdentificationNumber
      * @param ?string $authenticationPassword
      * @param ?string $purchasePassword
-     * @return \BVP\Trimmer\PurchaserInterface
+     * @return \BVP\Purchaser\PurchaserInterface
      */
     #[\Override]
     public static function createInstance(
         ?PurchaserCoreInterface $purchaserCore = null,
         ?string $seleniumServerUrl = null,
-        ?int $depositAmount = null,
-        ?string $subscriberNumber = null,
-        ?string $personalIdentificationNumber = null,
-        ?string $authenticationPassword = null,
-        ?string $purchasePassword = null
+        ?int $maxDepositAmount = PurchaserCore::DEFAULT_MAX_DEPOSIT_AMOUNT,
+        #[\SensitiveParameter] ?string $subscriberNumber = null,
+        #[\SensitiveParameter] ?string $personalIdentificationNumber = null,
+        #[\SensitiveParameter] ?string $authenticationPassword = null,
+        #[\SensitiveParameter] ?string $purchasePassword = null
     ): PurchaserInterface {
         return self::$instance = new self(
             $purchaserCore ?? new PurchaserCore(
                 $seleniumServerUrl,
-                $depositAmount,
+                $maxDepositAmount,
                 $subscriberNumber,
                 $personalIdentificationNumber,
                 $authenticationPassword,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BVP\Purchaser\Tests;
 
 use BVP\Purchaser\Purchaser;
+use BVP\Purchaser\PurchaserCore;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 /**
@@ -12,43 +13,78 @@ use PHPUnit\Framework\TestCase as PHPUnitTestCase;
  */
 final class PurchaserTest extends PHPUnitTestCase
 {
+    use TeleboatCredentials;
+
     /**
-     * @doesNotPerformAssertions
+     * ファサードはシングルトンを抱えるので、テスト間に持ち越さない。
      *
      * @psalm-return void
      *
      * @return void
      */
-    public function testPurchaser(): void
+    #[\Override]
+    protected function setUp(): void
     {
-        $subscriberNumber = $_ENV['SUBSCRIBER_NUMBER'];
-        if ($subscriberNumber === '') {
-            return;
-        }
+        Purchaser::resetInstance();
+    }
 
-        $personalIdentificationNumber = $_ENV['PERSONAL_IDENTIFICATION_NUMBER'];
-        if ($personalIdentificationNumber === '') {
-            return;
-        }
+    /**
+     * @psalm-return void
+     *
+     * @return void
+     */
+    #[\Override]
+    protected function tearDown(): void
+    {
+        Purchaser::resetInstance();
+    }
 
-        $authenticationPassword = $_ENV['AUTHENTICATION_PASSWORD'];
-        if ($authenticationPassword === '') {
-            return;
-        }
+    /**
+     * ブラウザを起動せずに、静的呼び出しが本体へ委譲されることだけを確認する。
+     *
+     * @psalm-return void
+     *
+     * @return void
+     */
+    public function testStaticCallIsForwardedToTheCore(): void
+    {
+        Purchaser::createInstance(new PurchaserCore());
 
-        $purchasePassword = $_ENV['PURCHASE_PASSWORD'];
-        if ($purchasePassword === '') {
-            return;
-        }
+        $this->assertInstanceOf(PurchaserCore::class, Purchaser::setMaxTotalAmount(5000));
+    }
 
-        Purchaser::setDepositAmount(1000)
-            ->setSubscriberNumber($subscriberNumber)
-            ->setPersonalIdentificationNumber($personalIdentificationNumber)
-            ->setAuthenticationPassword($authenticationPassword)
-            ->setPurchasePassword($purchasePassword)
-            ->purchase(stadiumNumber: 24, number: 12, type: 6, focuses: [
-                '1-2-3' => 500,
-                '1-2-4' => 500,
-            ]);
+    /**
+     * @psalm-return void
+     *
+     * @return void
+     */
+    public function testCreateInstanceReplacesTheSingleton(): void
+    {
+        $first = Purchaser::createInstance(new PurchaserCore());
+        $second = Purchaser::createInstance(new PurchaserCore());
+
+        $this->assertNotSame($first, $second);
+        $this->assertSame($second, Purchaser::getInstance());
+    }
+
+    /**
+     * @psalm-return void
+     *
+     * @return void
+     */
+    public function testEnsureBalance(): void
+    {
+        $this->requireOptIn('PURCHASER_E2E_DEPOSIT');
+
+        Purchaser::createInstance(new PurchaserCore());
+
+        $balance = Purchaser::setSubscriberNumber($this->credential('SUBSCRIBER_NUMBER'))
+            ->setPersonalIdentificationNumber($this->credential('PERSONAL_IDENTIFICATION_NUMBER'))
+            ->setAuthenticationPassword($this->credential('AUTHENTICATION_PASSWORD'))
+            ->setPurchasePassword($this->credential('PURCHASE_PASSWORD'))
+            ->setArtifactDirectory(sys_get_temp_dir() . '/bvp-purchaser-artifacts')
+            ->ensureBalance();
+
+        $this->assertGreaterThanOrEqual(PurchaserCore::DEFAULT_TARGET_BALANCE, $balance);
     }
 }

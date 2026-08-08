@@ -4,19 +4,30 @@ declare(strict_types=1);
 
 namespace BVP\Purchaser;
 
+use DateTimeInterface;
+
 /**
  * @author shimomo
  */
 interface PurchaserCoreInterface
 {
     /**
-     * @psalm-param int<1000, max> $depositAmount
+     * @psalm-param int<1000, max> $maxDepositAmount
      * @psalm-return \BVP\Purchaser\PurchaserCore
      *
-     * @param int $depositAmount
+     * @param int $maxDepositAmount
      * @return \BVP\Purchaser\PurchaserCore
      */
-    public function setDepositAmount(int $depositAmount): PurchaserCore;
+    public function setMaxDepositAmount(int $maxDepositAmount): PurchaserCore;
+
+    /**
+     * @psalm-param int<100, max> $maxTotalAmount
+     * @psalm-return \BVP\Purchaser\PurchaserCore
+     *
+     * @param int $maxTotalAmount
+     * @return \BVP\Purchaser\PurchaserCore
+     */
+    public function setMaxTotalAmount(int $maxTotalAmount): PurchaserCore;
 
     /**
      * @psalm-param non-empty-string $subscriberNumber
@@ -55,17 +66,62 @@ interface PurchaserCoreInterface
     public function setPurchasePassword(string $purchasePassword): PurchaserCore;
 
     /**
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-param int<1, 7> $type
-     * @psalm-param non-empty-array<non-empty-string, int<100, max>> $focuses
-     * @psalm-return void
+     * @psalm-param ?\DateTimeInterface $deadline
+     * @psalm-param int<0, max> $marginSeconds
+     * @psalm-return \BVP\Purchaser\PurchaserCore
+     *
+     * @param ?\DateTimeInterface $deadline
+     * @param int $marginSeconds
+     * @return \BVP\Purchaser\PurchaserCore
+     */
+    public function setDeadline(?DateTimeInterface $deadline, int $marginSeconds = 5): PurchaserCore;
+
+    /**
+     * @psalm-param ?non-empty-string $artifactDirectory
+     * @psalm-return \BVP\Purchaser\PurchaserCore
+     *
+     * @param ?string $artifactDirectory
+     * @return \BVP\Purchaser\PurchaserCore
+     */
+    public function setArtifactDirectory(?string $artifactDirectory): PurchaserCore;
+
+    /**
+     * @psalm-param non-empty-string $lockPath
+     * @psalm-return \BVP\Purchaser\PurchaserCore
+     *
+     * @param string $lockPath
+     * @return \BVP\Purchaser\PurchaserCore
+     */
+    public function setLockPath(string $lockPath): PurchaserCore;
+
+    /**
+     * @psalm-return int
+     *
+     * @return int
+     */
+    public function balance(): int;
+
+    /**
+     * @psalm-param int $required
+     * @psalm-return int
+     *
+     * @param int $required
+     * @return int
+     */
+    public function ensureBalance(int $required = PurchaserCore::DEFAULT_TARGET_BALANCE): int;
+
+    /**
+     * @psalm-param int $stadiumNumber
+     * @psalm-param int $number
+     * @psalm-param int $type
+     * @psalm-param non-empty-array<array-key, int> $focuses
+     * @psalm-return \BVP\Purchaser\Receipt
      *
      * @param int $stadiumNumber
      * @param int $number
      * @param int $type
      * @param array $focuses
-     * @return void
+     * @return \BVP\Purchaser\Receipt
      */
-    public function purchase(int $stadiumNumber, int $number, int $type, array $focuses): void;
+    public function purchase(int $stadiumNumber, int $number, int $type, array $focuses): Receipt;
 }
