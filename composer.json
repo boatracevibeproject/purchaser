@@ -15,8 +15,8 @@
         }
     ],
     "support": {
-        "issues": "https://github.com/shimomo/bvp-purchaser/issues",
-        "source": "https://github.com/shimomo/bvp-purchaser"
+        "issues": "https://github.com/boatracevibeproject/purchaser/issues",
+        "source": "https://github.com/boatracevibeproject/purchaser"
     },
     "require": {
         "php": "^8.3",

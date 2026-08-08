@@ -1,11 +1,14 @@
 # Purchaser for Boatrace Venture Project
 
-[![keepalive](https://github.com/shimomo/bvp-purchaser/actions/workflows/keepalive.yml/badge.svg)](https://github.com/shimomo/bvp-purchaser/actions/workflows/keepalive.yml)
-[![psalm](https://github.com/shimomo/bvp-purchaser/actions/workflows/psalm.yml/badge.svg)](https://github.com/shimomo/bvp-purchaser/actions/workflows/psalm.yml)
-[![security](https://github.com/shimomo/bvp-purchaser/actions/workflows/security.yml/badge.svg)](https://github.com/shimomo/bvp-purchaser/actions/workflows/security.yml)
 [![php](https://poser.pugx.org/bvp/purchaser/require/php)](https://packagist.org/packages/bvp/purchaser)
 [![stable](https://poser.pugx.org/bvp/purchaser/v/stable)](https://packagist.org/packages/bvp/purchaser)
 [![license](https://poser.pugx.org/bvp/purchaser/license)](https://packagist.org/packages/bvp/purchaser)
+
+[![test](https://github.com/boatracevibeproject/purchaser/actions/workflows/test.yml/badge.svg)](https://github.com/boatracevibeproject/purchaser/actions/workflows/test.yml)
+[![lint](https://github.com/boatracevibeproject/purchaser/actions/workflows/lint.yml/badge.svg)](https://github.com/boatracevibeproject/purchaser/actions/workflows/lint.yml)
+[![psalm](https://github.com/boatracevibeproject/purchaser/actions/workflows/psalm.yml/badge.svg)](https://github.com/boatracevibeproject/purchaser/actions/workflows/psalm.yml)
+[![security](https://github.com/boatracevibeproject/purchaser/actions/workflows/security.yml/badge.svg)](https://github.com/boatracevibeproject/purchaser/actions/workflows/security.yml)
+[![keepalive](https://github.com/boatracevibeproject/purchaser/actions/workflows/keepalive.yml/badge.svg)](https://github.com/boatracevibeproject/purchaser/actions/workflows/keepalive.yml)
 
 Purchaser は、舟券を自動購入するための PHP ライブラリです。
 
@@ -105,7 +108,7 @@ print_r($receipt->stepMilliseconds);
 このリポジトリをクローンします。
 
 ```bash
-git clone git@github.com:shimomo/bvp-purchaser.git
+git clone git@github.com:boatracevibeproject/purchaser.git
 ```
 
 ### Step 2
@@ -113,7 +116,7 @@ git clone git@github.com:shimomo/bvp-purchaser.git
 必要なライブラリをインストールします。
 
 ```bash
-cd bvp-purchaser && composer install
+cd purchaser && composer install
 ```
 
 ### Step 3
