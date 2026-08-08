@@ -35,3 +35,6 @@ jobs:
 
       - name: Run Pint
         run: composer lint
+
+      - name: Check composer.json Normalization
+        run: composer normalize --dry-run

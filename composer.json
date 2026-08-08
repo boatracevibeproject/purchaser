@@ -1,14 +1,13 @@
 {
-    "$schema": "https://getcomposer.org/schema.json",
     "name": "bvp/purchaser",
     "description": "Purchaser for Boatrace Venture Project",
+    "license": "MIT",
+    "type": "library",
     "keywords": [
         "boatrace",
         "library",
         "purchaser"
     ],
-    "license": "MIT",
-    "type": "library",
     "authors": [
         {
             "name": "shimomo",
@@ -24,10 +23,13 @@
         "php-webdriver/webdriver": "^1.9"
     },
     "require-dev": {
+        "ergebnis/composer-normalize": "^2.52",
+        "laravel/pint": "^1.30",
         "phpunit/phpunit": "^12.0 || ^13.0",
-        "vimeo/psalm": "^6.0",
-        "laravel/pint": "^1.30"
+        "vimeo/psalm": "^6.0"
     },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
     "autoload": {
         "psr-4": {
             "BVP\\Purchaser\\": "src/"
@@ -38,6 +40,11 @@
             "BVP\\Purchaser\\Tests\\": "tests/"
         }
     },
+    "config": {
+        "allow-plugins": {
+            "ergebnis/composer-normalize": true
+        }
+    },
     "scripts": {
         "lint": [
             "@php vendor/bin/pint --test"
@@ -46,6 +53,5 @@
             "@php vendor/bin/pint"
         ]
     },
-    "minimum-stability": "stable",
-    "prefer-stable": true
+    "$schema": "https://getcomposer.org/schema.json"
 }
