@@ -7,6 +7,7 @@ namespace BVP\Purchaser;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Facebook\WebDriver\Chrome\ChromeOptions;
+use Facebook\WebDriver\Exception\ElementClickInterceptedException;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Remote\RemoteWebElement;
@@ -371,7 +372,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
         $this->waitVisible(WebDriverBy::id('memberNo'))->sendKeys((string) $this->subscriberNumber);
         $this->waitVisible(WebDriverBy::id('pin'))->sendKeys((string) $this->personalIdentificationNumber);
         $this->waitVisible(WebDriverBy::id('authPassword'))->sendKeys((string) $this->authenticationPassword);
-        $this->waitClickable(WebDriverBy::id('loginButton'))->click();
+        $this->click(WebDriverBy::id('loginButton'));
 
         // click() 直後は新ウィンドウがまだ開いていないことがあるので、増えるまで待つ。
         $expected = count($previousHandles) + 1;
@@ -469,34 +470,34 @@ final class PurchaserCore implements Contracts\PurchaserCore
     {
         $started = microtime(true);
 
-        $this->waitClickable(WebDriverBy::id('gnavi01'))->click();
-        $this->waitClickable(WebDriverBy::id('charge'))->click();
+        $this->click(WebDriverBy::id('gnavi01'));
+        $this->click(WebDriverBy::id('charge'));
 
         // 入金指示は1,000円単位で入力する。
         $this->waitVisible(WebDriverBy::id('chargeInstructAmt'))
             ->sendKeys((string) intdiv($amount, self::DEPOSIT_UNIT));
 
         $this->waitVisible(WebDriverBy::id('chargeBetPassword'))->sendKeys((string) $this->purchasePassword);
-        $this->waitClickable(WebDriverBy::id('executeCharge'))->click();
+        $this->click(WebDriverBy::id('executeCharge'));
 
         // ⚠ 旧実装から踏襲。id('ok') の出現を待って linkText('OK') を押している。
         // 実機で確認できていないため、この非対称はあえてそのままにしてある。
         $this->waitClickable(WebDriverBy::id('ok'));
         $this->driver()->findElement(WebDriverBy::linkText('OK'))->click();
 
-        $this->waitClickable(WebDriverBy::id('closeChargecomp'))->click();
+        $this->click(WebDriverBy::id('closeChargecomp'));
         $this->recordStep('charge', $started);
     }
 
     private function fetchBalance(): int
     {
-        $this->waitClickable(WebDriverBy::id('gnavi02'))->click();
-        $this->waitClickable(WebDriverBy::id('balref'))->click();
+        $this->click(WebDriverBy::id('gnavi02'));
+        $this->click(WebDriverBy::id('balref'));
 
         $text = $this->waitVisible(WebDriverBy::cssSelector(self::LOCATOR_BALANCE))->getText();
         $digits = preg_replace('/[^0-9]/', '', $text);
 
-        $this->waitClickable(WebDriverBy::id('closeBalref'))->click();
+        $this->click(WebDriverBy::id('closeBalref'));
 
         // 数字が1文字も取れないのは、セレクタが別の列を指すようになった等の構造変化。
         // ここで 0 を返すと「入金が反映されない」と誤診断するので、別の失敗として扱う。
@@ -514,19 +515,19 @@ final class PurchaserCore implements Contracts\PurchaserCore
         $started = microtime(true);
         $this->assertDeadline('レースの選択');
 
-        $this->waitClickable(WebDriverBy::id('jyo'.sprintf('%02d', $stadiumNumber)))->click();
-        $this->waitClickable(WebDriverBy::id('selRaceNo'.sprintf('%02d', $number)))->click();
+        $this->click(WebDriverBy::id('jyo'.sprintf('%02d', $stadiumNumber)));
+        $this->click(WebDriverBy::id('selRaceNo'.sprintf('%02d', $number)));
         $this->assertRaceNumber($number);
 
-        $this->waitClickable(WebDriverBy::id('betkati'.$slip->betType))->click();
-        $this->waitClickable(WebDriverBy::id('betway1'))->click();
+        $this->click(WebDriverBy::id('betkati'.$slip->betType));
+        $this->click(WebDriverBy::id('betway1'));
         $this->recordStep('select-race', $started);
 
         $registered = microtime(true);
 
         foreach ($slip->bets as $bet) {
             foreach ($bet['legs'] as $index => $leg) {
-                $this->waitClickable(WebDriverBy::id('regbtn_'.$leg.'_'.($index + 1)))->click();
+                $this->click(WebDriverBy::id('regbtn_'.$leg.'_'.($index + 1)));
             }
 
             // 購入金額は100円単位で入力する。
@@ -534,7 +535,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
             $amount->clear();
             $amount->sendKeys((string) intdiv($bet['amount'], BetSlip::AMOUNT_UNIT));
 
-            $this->waitClickable(WebDriverBy::id('regAmountBtn'))->click();
+            $this->click(WebDriverBy::id('regAmountBtn'));
         }
 
         $this->recordStep('register-bets', $registered);
@@ -545,16 +546,16 @@ final class PurchaserCore implements Contracts\PurchaserCore
         $this->assertDeadline('投票の確定');
 
         $submitted = microtime(true);
-        $this->waitClickable(WebDriverBy::cssSelector('.btnSubmit'))->click();
+        $this->click(WebDriverBy::cssSelector('.btnSubmit'));
 
         // ここで入力する合計金額はサイト側の計算値と突き合わされる。
         // 買い目を取りこぼしていれば弾かれるので、この入力自体が点検になっている。
         $this->waitVisible(WebDriverBy::name('betAmount'))->sendKeys((string) $slip->totalAmount);
         $this->waitVisible(WebDriverBy::name('betPassword'))->sendKeys((string) $this->purchasePassword);
-        $this->waitClickable(WebDriverBy::id('submitBet'))->click();
+        $this->click(WebDriverBy::id('submitBet'));
 
         try {
-            $this->waitClickable(WebDriverBy::id('ok'))->click();
+            $this->click(WebDriverBy::id('ok'));
             $confirmation = $this->waitVisible(WebDriverBy::id('thanksArea'))->getText();
         } catch (Throwable $exception) {
             throw new PurchaserException(
@@ -715,6 +716,36 @@ final class PurchaserCore implements Contracts\PurchaserCore
             $timeout,
             WebDriverExpectedCondition::elementToBeClickable($by)
         );
+    }
+
+    /**
+     * クリックが他要素に覆われて弾かれたら、お知らせダイアログを閉じて1度だけ撃ち直す。
+     *
+     * 「特別なお知らせ」は jsrender が非同期に描画するので、login() 末尾の
+     * dismissNewsDialog() が空振りした直後に出てくることがある。そうなると
+     * グローバルナビが <h1> に覆われ、以降のクリックが軒並み弾かれる
+     * （2026-08-10 に fetchBalance() の #gnavi02 で実際に購入が落ちた）。
+     *
+     * どのクリックでも起こりうるので、復帰は呼び出し側ごとではなくここに置く。
+     * ElementClickInterceptedException はクリックが対象に届く前に投げられるため、
+     * 撃ち直しで二重に押してしまう心配はない。
+     *
+     * @param  ?int<1, max>  $timeout
+     */
+    private function click(WebDriverBy $by, ?int $timeout = null): void
+    {
+        try {
+            $this->waitClickable($by, $timeout)->click();
+
+            return;
+        } catch (ElementClickInterceptedException $exception) {
+            // 覆っているものを退けてから下で撃ち直す。
+        }
+
+        $this->dismissNewsDialog();
+
+        // 要素は取り直す。ダイアログを閉じた時点で DOM が差し替わりうる。
+        $this->waitClickable($by, $timeout)->click();
     }
 
     /**
