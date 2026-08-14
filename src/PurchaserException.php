@@ -14,4 +14,6 @@ use RuntimeException;
  *
  * @author shimomo
  */
-final class PurchaserException extends RuntimeException {}
+final class PurchaserException extends RuntimeException
+{
+}

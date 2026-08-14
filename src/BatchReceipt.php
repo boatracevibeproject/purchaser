@@ -60,7 +60,7 @@ final readonly class BatchReceipt
     {
         return [
             'receipts' => array_map(
-                static fn (Receipt $receipt): array => $receipt->toArray(),
+                static fn(Receipt $receipt): array => $receipt->toArray(),
                 $this->receipts
             ),
             'skipped' => $this->skipped,

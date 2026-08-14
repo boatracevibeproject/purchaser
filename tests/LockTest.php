@@ -18,7 +18,7 @@ final class LockTest extends PHPUnitTestCase
     #[\Override]
     protected function setUp(): void
     {
-        $this->path = sys_get_temp_dir().'/bvp-purchaser-test-'.bin2hex(random_bytes(8)).'.lock';
+        $this->path = sys_get_temp_dir() . '/bvp-purchaser-test-' . bin2hex(random_bytes(8)) . '.lock';
     }
 
     #[\Override]

@@ -135,7 +135,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
         #[\SensitiveParameter] private ?string $purchasePassword = null,
         private ?int $maxTotalAmount = self::DEFAULT_MAX_TOTAL_AMOUNT
     ) {
-        $this->lockPath = sys_get_temp_dir().'/bvp-purchaser.lock';
+        $this->lockPath = sys_get_temp_dir() . '/bvp-purchaser.lock';
     }
 
     /**
@@ -279,7 +279,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
     public function balance(): int
     {
         /** @var int */
-        return $this->withSession(fn (): int => $this->fetchBalance(), 'balance');
+        return $this->withSession(fn(): int => $this->fetchBalance(), 'balance');
     }
 
     /**
@@ -304,7 +304,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
     public function ensureBalance(int $required = self::DEFAULT_TARGET_BALANCE): int
     {
         /** @var int */
-        return $this->withSession(fn (): int => $this->ensureBalanceInSession($required), 'ensure-balance');
+        return $this->withSession(fn(): int => $this->ensureBalanceInSession($required), 'ensure-balance');
     }
 
     /**
@@ -369,7 +369,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
         if ($batchLimit !== null && $required > $batchLimit) {
             throw new PurchaserException(
                 "購入金額の合計 {$required} 円が1セッションの上限 {$batchLimit} 円を超えています。"
-                .'（'.count($plans).' レース）'
+                . '（' . count($plans) . ' レース）'
             );
         }
 
@@ -435,12 +435,12 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
             // 同じレースの同じ賭式を2件に分けるのは、まず呼び出し側のバグ。
             // 賭式が違えば別物なので、そこまでは通す。
-            $key = $stadiumNumber.'-'.$number.'-'.$type;
+            $key = $stadiumNumber . '-' . $number . '-' . $type;
 
             if (isset($seen[$key])) {
                 throw new PurchaserException(
                     "同じレース・同じ賭式が重複しています。stadiumNumber={$stadiumNumber} / "
-                    ."number={$number} / type={$type}。買い目を1件にまとめてください。"
+                    . "number={$number} / type={$type}。買い目を1件にまとめてください。"
                 );
             }
 
@@ -450,7 +450,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
             if ($this->maxTotalAmount !== null && $slip->totalAmount > $this->maxTotalAmount) {
                 throw new PurchaserException(
                     "購入金額の合計 {$slip->totalAmount} 円が1レースの上限 {$this->maxTotalAmount} 円を"
-                    ."超えています。stadiumNumber={$stadiumNumber} / number={$number}"
+                    . "超えています。stadiumNumber={$stadiumNumber} / number={$number}"
                 );
             }
 
@@ -462,7 +462,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
             ) {
                 throw new PurchaserException(
                     "レースが締切の早い順に並んでいません。{$index} 番目（0 始まり）の "
-                    ."{$number}R の締切が、その前のレースより早くなっています。"
+                    . "{$number}R の締切が、その前のレースより早くなっています。"
                 );
             }
 
@@ -527,7 +527,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
             }
 
             throw new PurchaserException(
-                "{$context} に失敗しました。".$exception->getMessage(),
+                "{$context} に失敗しました。" . $exception->getMessage(),
                 (int) $exception->getCode(),
                 $exception
             );
@@ -555,12 +555,12 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
         try {
             $driver->wait(self::WAIT_TIMEOUT_SECONDS, self::WAIT_INTERVAL_MILLISECONDS)->until(
-                static fn (RemoteWebDriver $driver): bool => count($driver->getWindowHandles()) >= $expected
+                static fn(RemoteWebDriver $driver): bool => count($driver->getWindowHandles()) >= $expected
             );
         } catch (Throwable $exception) {
             throw new PurchaserException(
                 'ログイン後の投票ウィンドウが開きませんでした。'
-                .'加入者番号・暗証番号・認証用パスワードの誤り、メンテナンス、多重ログインを疑ってください。',
+                . '加入者番号・暗証番号・認証用パスワードの誤り、メンテナンス、多重ログインを疑ってください。',
                 0,
                 $exception
             );
@@ -614,7 +614,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
         if ($this->maxDepositAmount !== null && $deposit > $this->maxDepositAmount) {
             throw new PurchaserException(
                 "必要な入金額 {$deposit} 円が上限 {$this->maxDepositAmount} 円を超えています。"
-                ."残高 {$balance} 円 / 必要 {$required} 円"
+                . "残高 {$balance} 円 / 必要 {$required} 円"
             );
         }
 
@@ -630,7 +630,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
             if (microtime(true) >= $deadline) {
                 throw new PurchaserException(
                     "入金が残高に反映されませんでした。残高 {$balance} 円 / 必要 {$required} 円 / "
-                    ."入金指示 {$deposit} 円 / 再照会 {$attempts} 回"
+                    . "入金指示 {$deposit} 円 / 再照会 {$attempts} 回"
                 );
             }
 
@@ -679,7 +679,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
         // ここで 0 を返すと「入金が反映されない」と誤診断するので、別の失敗として扱う。
         if ($digits === null || $digits === '') {
             throw new PurchaserException(
-                '残高照会の解釈に失敗しました。セレクタ '.self::LOCATOR_BALANCE." の取得値: 「{$text}」"
+                '残高照会の解釈に失敗しました。セレクタ ' . self::LOCATOR_BALANCE . " の取得値: 「{$text}」"
             );
         }
 
@@ -720,7 +720,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
             }
 
             try {
-                $this->assertDeadline($plan['number'].'R の投票', $plan['deadline']);
+                $this->assertDeadline($plan['number'] . 'R の投票', $plan['deadline']);
             } catch (PurchaserException $exception) {
                 // 締切をまたいだのはこのレースだけ。後続まで落とす理由はない。
                 $skipped[] = $race + ['reason' => $exception->getMessage()];
@@ -769,7 +769,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
                 if ($receipt->acceptedAmount !== null && $receipt->acceptedAmount !== $slip->totalAmount) {
                     $failure = $race + [
                         'reason' => "購入成立金額 {$receipt->acceptedAmount} 円が"
-                            ."投票額 {$slip->totalAmount} 円と一致しません。",
+                            . "投票額 {$slip->totalAmount} 円と一致しません。",
                     ];
                 }
             } catch (Throwable $exception) {
@@ -789,11 +789,11 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
         if ($receipts === []) {
             $reasons = array_map(
-                static fn (array $entry): string => $entry['reason'],
+                static fn(array $entry): string => $entry['reason'],
                 $skipped
             );
 
-            throw new PurchaserException('投票できたレースがありません。'.implode(' / ', $reasons));
+            throw new PurchaserException('投票できたレースがありません。' . implode(' / ', $reasons));
         }
 
         return new BatchReceipt(
@@ -824,7 +824,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
             // 遷移したことをここで見ておく。空振りしていると、次のレース場の
             // クリックが「要素が出ない」形で時間切れになり、原因が読めなくなる。
-            $this->waitClickable(WebDriverBy::id('jyo'.sprintf('%02d', $stadiumNumber)));
+            $this->waitClickable(WebDriverBy::id('jyo' . sprintf('%02d', $stadiumNumber)));
         } catch (Throwable $exception) {
             throw new PurchaserException(
                 '投票完了画面から場選択画面へ戻れませんでした。画面構造の変化を疑ってください。',
@@ -904,11 +904,11 @@ final class PurchaserCore implements Contracts\PurchaserCore
         $started = microtime(true);
         $this->assertDeadline('レースの選択', $deadline);
 
-        $this->click(WebDriverBy::id('jyo'.sprintf('%02d', $stadiumNumber)));
-        $this->click(WebDriverBy::id('selRaceNo'.sprintf('%02d', $number)));
+        $this->click(WebDriverBy::id('jyo' . sprintf('%02d', $stadiumNumber)));
+        $this->click(WebDriverBy::id('selRaceNo' . sprintf('%02d', $number)));
         $this->assertRaceNumber($number);
 
-        $this->click(WebDriverBy::id('betkati'.$slip->betType));
+        $this->click(WebDriverBy::id('betkati' . $slip->betType));
         $this->click(WebDriverBy::id('betway1'));
         $this->recordStep('select-race', $started);
 
@@ -916,7 +916,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
         foreach ($slip->bets as $bet) {
             foreach ($bet['legs'] as $index => $leg) {
-                $this->click(WebDriverBy::id('regbtn_'.$leg.'_'.($index + 1)));
+                $this->click(WebDriverBy::id('regbtn_' . $leg . '_' . ($index + 1)));
             }
 
             // 購入金額は100円単位で入力する。
@@ -949,7 +949,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
         } catch (Throwable $exception) {
             throw new PurchaserException(
                 '投票の確定に失敗しました。合計金額の不一致、残高不足、締切超過を疑ってください。'
-                ."合計 {$slip->totalAmount} 円 / {$slip->count()} 点 / 投票直前の残高 {$balanceBefore} 円",
+                . "合計 {$slip->totalAmount} 円 / {$slip->count()} 点 / 投票直前の残高 {$balanceBefore} 円",
                 0,
                 $exception
             );
@@ -965,7 +965,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
             $slip->bets,
             $slip->totalAmount,
             $balanceBefore,
-            new DateTimeImmutable,
+            new DateTimeImmutable(),
             (int) round((microtime(true) - $started) * 1000.0),
             $this->stepMilliseconds,
             $confirmation,
@@ -980,13 +980,13 @@ final class PurchaserCore implements Contracts\PurchaserCore
             $this->driver()->wait(self::WAIT_TIMEOUT_SECONDS, self::WAIT_INTERVAL_MILLISECONDS)->until(
                 WebDriverExpectedCondition::elementTextContains(
                     WebDriverBy::xpath(self::LOCATOR_RACE_NUMBER),
-                    $number.'R'
+                    $number . 'R'
                 )
             );
         } catch (Throwable $exception) {
             throw new PurchaserException(
                 "投票画面が {$number}R であることを確認できませんでした。"
-                .'繰り上がり、または画面構造の変化を疑ってください。',
+                . '繰り上がり、または画面構造の変化を疑ってください。',
                 0,
                 $exception
             );
@@ -1007,7 +1007,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
         if ($remaining <= $this->deadlineMarginSeconds) {
             throw new PurchaserException(
                 "締切まで残り {$remaining} 秒のため {$step} を中止しました。"
-                ."（下限 {$this->deadlineMarginSeconds} 秒）"
+                . "（下限 {$this->deadlineMarginSeconds} 秒）"
             );
         }
     }
@@ -1033,7 +1033,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
         }
 
         if ($missing !== []) {
-            throw new PurchaserException('会員情報が設定されていません: '.implode('、', $missing));
+            throw new PurchaserException('会員情報が設定されていません: ' . implode('、', $missing));
         }
     }
 
@@ -1053,9 +1053,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
                 mkdir($this->artifactDirectory, 0o755, true);
             }
 
-            $prefix = $this->artifactDirectory.'/'.date('Ymd-His').'-'.$context;
-            $this->driver->takeScreenshot($prefix.'.png');
-            file_put_contents($prefix.'.html', $this->driver->getPageSource());
+            $prefix = $this->artifactDirectory . '/' . date('Ymd-His') . '-' . $context;
+            $this->driver->takeScreenshot($prefix . '.png');
+            file_put_contents($prefix . '.html', $this->driver->getPageSource());
         } catch (Throwable $exception) {
             // 証跡の保存に失敗しても、元の例外を握り潰さない。
         }
@@ -1072,7 +1072,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
     private function capabilities(): DesiredCapabilities
     {
-        $options = new ChromeOptions;
+        $options = new ChromeOptions();
         $options->addArguments([
             '--headless=new',
             '--disable-gpu',

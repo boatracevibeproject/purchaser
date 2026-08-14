@@ -83,7 +83,7 @@ final class PurchaserCoreTest extends PHPUnitTestCase
 
         $this->assertFalse(
             $batch->hasFailure(),
-            '途中で中止している: '.(string) json_encode($batch->failure, JSON_UNESCAPED_UNICODE)
+            '途中で中止している: ' . (string) json_encode($batch->failure, JSON_UNESCAPED_UNICODE)
         );
 
         $this->assertSame([], $batch->skipped);
@@ -107,11 +107,11 @@ final class PurchaserCoreTest extends PHPUnitTestCase
     private function purchaser(): PurchaserCore
     {
         // コンストラクタではブラウザを起動しないので、スキップされるテストでも無害。
-        return (new PurchaserCore)
+        return (new PurchaserCore())
             ->setSubscriberNumber($this->credential('SUBSCRIBER_NUMBER'))
             ->setPersonalIdentificationNumber($this->credential('PERSONAL_IDENTIFICATION_NUMBER'))
             ->setAuthenticationPassword($this->credential('AUTHENTICATION_PASSWORD'))
             ->setPurchasePassword($this->credential('PURCHASE_PASSWORD'))
-            ->setArtifactDirectory(sys_get_temp_dir().'/bvp-purchaser-artifacts');
+            ->setArtifactDirectory(sys_get_temp_dir() . '/bvp-purchaser-artifacts');
     }
 }
