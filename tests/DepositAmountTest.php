@@ -22,10 +22,10 @@ final class DepositAmountTest extends PHPUnitTestCase
         $this->assertSame(0, PurchaserCore::requiredDepositAmount(10000, 10000));
         $this->assertSame(0, PurchaserCore::requiredDepositAmount(12000, 10000));
     }
+
     /**
      * @return void
      */
-
     public function test_shortfall_is_rounded_up_to_thousand_yen(): void
     {
         // 不足 10,000 円 → ちょうど 10,000 円

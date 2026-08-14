@@ -24,11 +24,14 @@ namespace BVP\Purchaser;
  */
 final class Purchaser implements Contracts\Purchaser
 {
+    /**
+     * @var ?\BVP\Purchaser\Contracts\Purchaser
+     */
     private static ?Contracts\Purchaser $instance = null;
+
     /**
      * @param \BVP\Purchaser\Contracts\PurchaserCore $purchaser
      */
-
     public function __construct(private readonly Contracts\PurchaserCore $purchaser)
     {
         //
@@ -117,10 +120,10 @@ final class Purchaser implements Contracts\Purchaser
             )
         );
     }
+
     /**
      * @return void
      */
-
     #[\Override]
     public static function resetInstance(): void
     {

@@ -53,10 +53,10 @@ final class PurchaserCoreTest extends PHPUnitTestCase
         $second = $purchaser->ensureBalance(PurchaserCore::DEFAULT_TARGET_BALANCE);
         $this->assertSame($first, $second, '2回目の ensureBalance() で残高が増えている（入金が冪等でない）');
     }
+
     /**
      * @return void
      */
-
     public function test_purchase(): void
     {
         $this->requireOptIn('PURCHASER_E2E_PURCHASE');
@@ -112,10 +112,10 @@ final class PurchaserCoreTest extends PHPUnitTestCase
             $batch->receipts[1]->stepMilliseconds['login'] ?? null
         );
     }
+
     /**
      * @return \BVP\Purchaser\PurchaserCore
      */
-
     private function purchaser(): PurchaserCore
     {
         // コンストラクタではブラウザを起動しないので、スキップされるテストでも無害。

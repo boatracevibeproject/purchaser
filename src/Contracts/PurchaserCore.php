@@ -73,16 +73,16 @@ interface PurchaserCore
      * @return \BVP\Purchaser\PurchaserCore
      */
     public function setLockPath(string $lockPath): \BVP\Purchaser\PurchaserCore;
+
     /**
      * @return int
      */
-
     public function balance(): int;
+
     /**
      * @param int $required
      * @return int
      */
-
     public function ensureBalance(int $required = \BVP\Purchaser\PurchaserCore::DEFAULT_TARGET_BALANCE): int;
 
     /**

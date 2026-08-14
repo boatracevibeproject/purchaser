@@ -606,10 +606,10 @@ final class PurchaserCore implements Contracts\PurchaserCore
             $lock->release();
         }
     }
+
     /**
      * @return void
      */
-
     private function login(): void
     {
         $started = microtime(true);
@@ -672,11 +672,11 @@ final class PurchaserCore implements Contracts\PurchaserCore
             // 出ていなければ何もしない。
         }
     }
+
     /**
      * @param int $required
      * @return int
      */
-
     private function ensureBalanceInSession(int $required): int
     {
         $started = microtime(true);
@@ -720,11 +720,11 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
         return $balance;
     }
+
     /**
      * @param int $amount
      * @return void
      */
-
     private function executeCharge(int $amount): void
     {
         $started = microtime(true);
@@ -747,10 +747,10 @@ final class PurchaserCore implements Contracts\PurchaserCore
         $this->click(WebDriverBy::id('closeChargecomp'));
         $this->recordStep('charge', $started);
     }
+
     /**
      * @return int
      */
-
     private function fetchBalance(): int
     {
         $this->click(WebDriverBy::id('gnavi02'));
@@ -986,6 +986,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
         return ['receiptNumber' => $receiptNumber, 'acceptedAmount' => $acceptedAmount];
     }
+
     /**
      * @param int $stadiumNumber
      * @param int $number
@@ -994,7 +995,6 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * @param ?\DateTimeInterface $deadline
      * @return \BVP\Purchaser\Receipt
      */
-
     private function placeBets(
         int $stadiumNumber,
         int $number,
@@ -1074,11 +1074,11 @@ final class PurchaserCore implements Contracts\PurchaserCore
             $accepted['acceptedAmount']
         );
     }
+
     /**
      * @param int $number
      * @return void
      */
-
     private function assertRaceNumber(int $number): void
     {
         try {
@@ -1118,10 +1118,10 @@ final class PurchaserCore implements Contracts\PurchaserCore
             );
         }
     }
+
     /**
      * @return void
      */
-
     private function assertCredentials(): void
     {
         $missing = [];
@@ -1171,10 +1171,10 @@ final class PurchaserCore implements Contracts\PurchaserCore
             // 証跡の保存に失敗しても、元の例外を握り潰さない。
         }
     }
+
     /**
      * @return \Facebook\WebDriver\Remote\RemoteWebDriver
      */
-
     private function driver(): RemoteWebDriver
     {
         // コンストラクタで張ると、DI コンテナに登録しただけでブラウザが起動する。
@@ -1183,10 +1183,10 @@ final class PurchaserCore implements Contracts\PurchaserCore
             $this->capabilities()
         );
     }
+
     /**
      * @return \Facebook\WebDriver\Remote\DesiredCapabilities
      */
-
     private function capabilities(): DesiredCapabilities
     {
         $options = new ChromeOptions();
@@ -1293,10 +1293,10 @@ final class PurchaserCore implements Contracts\PurchaserCore
     {
         $this->stepMilliseconds[$step] = (int) round((microtime(true) - $startedAt) * 1000.0);
     }
+
     /**
      * @return void
      */
-
     private function closeSession(): void
     {
         if ($this->driver === null) {

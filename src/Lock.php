@@ -21,11 +21,11 @@ final class Lock
      * @var ?resource
      */
     private mixed $handle = null;
+
     /**
      * @param string $path
      * @param float $timeoutSeconds
      */
-
     public function __construct(
         private readonly string $path,
         private readonly float $timeoutSeconds = 30.0
@@ -65,10 +65,10 @@ final class Lock
 
         $this->handle = $handle;
     }
+
     /**
      * @return void
      */
-
     public function release(): void
     {
         if ($this->handle === null) {

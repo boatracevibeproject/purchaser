@@ -58,10 +58,10 @@ final class PurchaseManyTest extends PHPUnitTestCase
             ],
         ]);
     }
+
     /**
      * @return void
      */
-
     public function test_the_same_race_and_bet_type_twice_is_rejected(): void
     {
         $this->expectException(PurchaserException::class);
@@ -140,10 +140,10 @@ final class PurchaseManyTest extends PHPUnitTestCase
             ['stadiumNumber' => 24, 'number' => 12, 'type' => 6, 'focuses' => ['1-2-3' => 10000]],
         ]);
     }
+
     /**
      * @return void
      */
-
     public function test_the_per_race_limit_still_applies(): void
     {
         $this->expectException(PurchaserException::class);
@@ -157,10 +157,10 @@ final class PurchaseManyTest extends PHPUnitTestCase
                 ['stadiumNumber' => 24, 'number' => 12, 'type' => 6, 'focuses' => ['1-2-3' => 1100]],
             ]);
     }
+
     /**
      * @return void
      */
-
     public function test_an_invalid_race_number_is_rejected(): void
     {
         $this->expectException(PurchaserException::class);

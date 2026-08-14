@@ -25,10 +25,10 @@ final class PurchaserTest extends PHPUnitTestCase
     {
         Purchaser::resetInstance();
     }
+
     /**
      * @return void
      */
-
     #[\Override]
     protected function tearDown(): void
     {
@@ -46,10 +46,10 @@ final class PurchaserTest extends PHPUnitTestCase
 
         $this->assertInstanceOf(PurchaserCore::class, Purchaser::setMaxTotalAmount(5000));
     }
+
     /**
      * @return void
      */
-
     public function test_create_instance_replaces_the_singleton(): void
     {
         $first = Purchaser::createInstance(new PurchaserCore());
@@ -58,10 +58,10 @@ final class PurchaserTest extends PHPUnitTestCase
         $this->assertNotSame($first, $second);
         $this->assertSame($second, Purchaser::getInstance());
     }
+
     /**
      * @return void
      */
-
     public function test_ensure_balance(): void
     {
         $this->requireOptIn('PURCHASER_E2E_DEPOSIT');
