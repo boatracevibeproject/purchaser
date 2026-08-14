@@ -17,12 +17,18 @@ final class LockTest extends PHPUnitTestCase
      * @var string
      */
     private string $path = '';
+    /**
+     * @return void
+     */
 
     #[\Override]
     protected function setUp(): void
     {
         $this->path = sys_get_temp_dir() . '/bvp-purchaser-test-' . bin2hex(random_bytes(8)) . '.lock';
     }
+    /**
+     * @return void
+     */
 
     #[\Override]
     protected function tearDown(): void
@@ -31,6 +37,9 @@ final class LockTest extends PHPUnitTestCase
             unlink($this->path);
         }
     }
+    /**
+     * @return void
+     */
 
     public function test_second_acquisition_fails_while_the_first_is_held(): void
     {
@@ -48,6 +57,9 @@ final class LockTest extends PHPUnitTestCase
             $first->release();
         }
     }
+    /**
+     * @return void
+     */
 
     public function test_lock_is_reusable_after_release(): void
     {
@@ -61,6 +73,9 @@ final class LockTest extends PHPUnitTestCase
 
         $this->assertFileExists($this->path);
     }
+    /**
+     * @return void
+     */
 
     public function test_acquire_is_idempotent(): void
     {

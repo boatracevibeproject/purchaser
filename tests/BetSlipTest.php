@@ -16,6 +16,8 @@ final class BetSlipTest extends PHPUnitTestCase
     /**
      * PHP は数値文字列の配列キーを int にキャストするため、単勝の '1' は int(1) で届く。
      * declare(strict_types=1) 下で preg_split() に渡すと TypeError になっていた。
+     *
+     * @return void
      */
     public function test_single_digit_focus_is_accepted_even_though_php_casts_the_key_to_int(): void
     {
@@ -25,6 +27,9 @@ final class BetSlipTest extends PHPUnitTestCase
         $this->assertSame(300, $slip->totalAmount);
         $this->assertSame(2, $slip->count());
     }
+    /**
+     * @return void
+     */
 
     public function test_trifecta_focuses_are_parsed_and_totalled(): void
     {
@@ -37,6 +42,8 @@ final class BetSlipTest extends PHPUnitTestCase
 
     /**
      * 着順を問わない賭式は `=` 区切りで届く。
+     *
+     * @return void
      */
     public function test_combination_delimiter_is_accepted(): void
     {
@@ -45,6 +52,9 @@ final class BetSlipTest extends PHPUnitTestCase
         $this->assertSame(['1', '2'], $slip->bets[0]['legs']);
         $this->assertSame(200, $slip->totalAmount);
     }
+    /**
+     * @return void
+     */
 
     public function test_combination_treats_reversed_order_as_duplicate(): void
     {
@@ -53,6 +63,9 @@ final class BetSlipTest extends PHPUnitTestCase
 
         BetSlip::fromFocuses(['1=2' => 100, '2=1' => 100], betType: 4);
     }
+    /**
+     * @return void
+     */
 
     public function test_exacta_keeps_order_and_allows_both_directions(): void
     {
@@ -60,6 +73,9 @@ final class BetSlipTest extends PHPUnitTestCase
 
         $this->assertSame(2, $slip->count());
     }
+    /**
+     * @return void
+     */
 
     public function test_leg_count_must_match_bet_type(): void
     {
@@ -68,6 +84,9 @@ final class BetSlipTest extends PHPUnitTestCase
 
         BetSlip::fromFocuses(['1-2' => 100], betType: 6);
     }
+    /**
+     * @return void
+     */
 
     public function test_amount_must_be_multiple_of_one_hundred(): void
     {
@@ -76,6 +95,9 @@ final class BetSlipTest extends PHPUnitTestCase
 
         BetSlip::fromFocuses(['1-2-3' => 150], betType: 6);
     }
+    /**
+     * @return void
+     */
 
     public function test_amount_must_reach_one_hundred(): void
     {
@@ -83,6 +105,9 @@ final class BetSlipTest extends PHPUnitTestCase
 
         BetSlip::fromFocuses(['1-2-3' => 0], betType: 6);
     }
+    /**
+     * @return void
+     */
 
     public function test_leg_out_of_range_is_rejected(): void
     {
@@ -91,6 +116,9 @@ final class BetSlipTest extends PHPUnitTestCase
 
         BetSlip::fromFocuses(['1-2-7' => 100], betType: 6);
     }
+    /**
+     * @return void
+     */
 
     public function test_repeated_boat_number_is_rejected(): void
     {
@@ -99,6 +127,9 @@ final class BetSlipTest extends PHPUnitTestCase
 
         BetSlip::fromFocuses(['1-1-2' => 100], betType: 6);
     }
+    /**
+     * @return void
+     */
 
     public function test_empty_focuses_is_rejected(): void
     {
@@ -107,6 +138,9 @@ final class BetSlipTest extends PHPUnitTestCase
 
         BetSlip::fromFocuses([], betType: 6);
     }
+    /**
+     * @return void
+     */
 
     public function test_unknown_bet_type_is_rejected(): void
     {

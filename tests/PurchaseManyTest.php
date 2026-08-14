@@ -19,6 +19,9 @@ use PHPUnit\Framework\TestCase as PHPUnitTestCase;
  */
 final class PurchaseManyTest extends PHPUnitTestCase
 {
+    /**
+     * @return void
+     */
     public function test_empty_races_are_rejected(): void
     {
         $this->expectException(PurchaserException::class);
@@ -30,6 +33,8 @@ final class PurchaseManyTest extends PHPUnitTestCase
 
     /**
      * 締切の早いレースを後ろに置くと、前のレースを処理する間に締切をまたぐ。
+     *
+     * @return void
      */
     public function test_races_out_of_deadline_order_are_rejected(): void
     {
@@ -53,6 +58,9 @@ final class PurchaseManyTest extends PHPUnitTestCase
             ],
         ]);
     }
+    /**
+     * @return void
+     */
 
     public function test_the_same_race_and_bet_type_twice_is_rejected(): void
     {
@@ -69,6 +77,8 @@ final class PurchaseManyTest extends PHPUnitTestCase
      * 同じレースでも賭式が違えば別物なので通す。
      *
      * 検証を通ったことを、次に来る締切の判定で確かめる（ブラウザは起動しない）。
+     *
+     * @return void
      */
     public function test_the_same_race_with_a_different_bet_type_passes_validation(): void
     {
@@ -95,6 +105,8 @@ final class PurchaseManyTest extends PHPUnitTestCase
 
     /**
      * 1レースずつは上限内でも、合計で上限を超えるものを止める。
+     *
+     * @return void
      */
     public function test_the_batch_limit_stops_the_sum_of_all_races(): void
     {
@@ -115,6 +127,8 @@ final class PurchaseManyTest extends PHPUnitTestCase
      * setMaxBatchAmount() を呼ばなければ、1レースの上限をそのまま合計の上限にする。
      *
      * 既定のまま N レース買って N 倍まで通ってしまうのが一番まずい。
+     *
+     * @return void
      */
     public function test_the_batch_limit_falls_back_to_the_per_race_limit(): void
     {
@@ -126,6 +140,9 @@ final class PurchaseManyTest extends PHPUnitTestCase
             ['stadiumNumber' => 24, 'number' => 12, 'type' => 6, 'focuses' => ['1-2-3' => 10000]],
         ]);
     }
+    /**
+     * @return void
+     */
 
     public function test_the_per_race_limit_still_applies(): void
     {
@@ -140,6 +157,9 @@ final class PurchaseManyTest extends PHPUnitTestCase
                 ['stadiumNumber' => 24, 'number' => 12, 'type' => 6, 'focuses' => ['1-2-3' => 1100]],
             ]);
     }
+    /**
+     * @return void
+     */
 
     public function test_an_invalid_race_number_is_rejected(): void
     {
@@ -154,6 +174,8 @@ final class PurchaseManyTest extends PHPUnitTestCase
 
     /**
      * 買い目の検証は1レース目だけでなく全レースに掛かる。
+     *
+     * @return void
      */
     public function test_a_broken_focus_in_a_later_race_is_rejected(): void
     {
@@ -168,6 +190,8 @@ final class PurchaseManyTest extends PHPUnitTestCase
 
     /**
      * 個別の締切が無いレースには setDeadline() の値を使う。
+     *
+     * @return void
      */
     public function test_the_session_deadline_applies_to_races_without_one(): void
     {

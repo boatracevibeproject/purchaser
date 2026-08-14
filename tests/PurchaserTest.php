@@ -17,12 +17,17 @@ final class PurchaserTest extends PHPUnitTestCase
 
     /**
      * ファサードはシングルトンを抱えるので、テスト間に持ち越さない。
+     *
+     * @return void
      */
     #[\Override]
     protected function setUp(): void
     {
         Purchaser::resetInstance();
     }
+    /**
+     * @return void
+     */
 
     #[\Override]
     protected function tearDown(): void
@@ -32,6 +37,8 @@ final class PurchaserTest extends PHPUnitTestCase
 
     /**
      * ブラウザを起動せずに、静的呼び出しが本体へ委譲されることだけを確認する。
+     *
+     * @return void
      */
     public function test_static_call_is_forwarded_to_the_core(): void
     {
@@ -39,6 +46,9 @@ final class PurchaserTest extends PHPUnitTestCase
 
         $this->assertInstanceOf(PurchaserCore::class, Purchaser::setMaxTotalAmount(5000));
     }
+    /**
+     * @return void
+     */
 
     public function test_create_instance_replaces_the_singleton(): void
     {
@@ -48,6 +58,9 @@ final class PurchaserTest extends PHPUnitTestCase
         $this->assertNotSame($first, $second);
         $this->assertSame($second, Purchaser::getInstance());
     }
+    /**
+     * @return void
+     */
 
     public function test_ensure_balance(): void
     {

@@ -39,7 +39,8 @@ enum BetType: int
     /**
      * 着順を問わない賭式かどうか。組番の重複判定を順序に依存させないために使う。
      *
-     * @return bool */
+     * @return bool
+     */
     public function isCombination(): bool
     {
         return match ($this) {

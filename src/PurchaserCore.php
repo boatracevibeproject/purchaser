@@ -159,12 +159,15 @@ final class PurchaserCore implements Contracts\PurchaserCore
     private array $stepMilliseconds = [];
 
     /**
-     * @param  ?non-empty-string  $seleniumServerUrl
-     * @param  ?int<1000, max>  $maxDepositAmount  1回の入金指示の上限
-     * @param  ?non-empty-string  $subscriberNumber
-     * @param  ?non-empty-string  $personalIdentificationNumber
-     * @param  ?non-empty-string  $authenticationPassword
-     * @param  ?non-empty-string  $purchasePassword
+     * $maxDepositAmount は1回の入金指示の上限。
+     *
+     * @param ?non-empty-string $seleniumServerUrl
+     * @param ?int<1000, max> $maxDepositAmount
+     * @param ?non-empty-string $subscriberNumber
+     * @param ?non-empty-string $personalIdentificationNumber
+     * @param ?non-empty-string $authenticationPassword
+     * @param ?non-empty-string $purchasePassword
+     * @param ?int $maxTotalAmount
      */
     public function __construct(
         private ?string $seleniumServerUrl = null,
@@ -187,7 +190,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @param  int<1000, max>  $maxDepositAmount
+     * @param int<1000, max> $maxDepositAmount
+     * @return \BVP\Purchaser\PurchaserCore
      */
     #[\Override]
     public function setMaxDepositAmount(int $maxDepositAmount): PurchaserCore
@@ -198,7 +202,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @param  int<100, max>  $maxTotalAmount
+     * @param int<100, max> $maxTotalAmount
+     * @return \BVP\Purchaser\PurchaserCore
      */
     #[\Override]
     public function setMaxTotalAmount(int $maxTotalAmount): PurchaserCore
@@ -214,7 +219,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * setMaxTotalAmount() は1レースの上限なので、N レース買えば N 倍まで通ってしまう。
      * null を渡すと maxTotalAmount をそのまま流用する。
      *
-     * @param  ?int<100, max>  $maxBatchAmount
+     * @param ?int<100, max> $maxBatchAmount
+     * @return \BVP\Purchaser\PurchaserCore
      */
     #[\Override]
     public function setMaxBatchAmount(?int $maxBatchAmount): PurchaserCore
@@ -225,7 +231,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @param  non-empty-string  $subscriberNumber
+     * @param non-empty-string $subscriberNumber
+     * @return \BVP\Purchaser\PurchaserCore
      */
     #[\Override]
     public function setSubscriberNumber(#[\SensitiveParameter] string $subscriberNumber): PurchaserCore
@@ -236,7 +243,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @param  non-empty-string  $personalIdentificationNumber
+     * @param non-empty-string $personalIdentificationNumber
+     * @return \BVP\Purchaser\PurchaserCore
      */
     #[\Override]
     public function setPersonalIdentificationNumber(
@@ -248,7 +256,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @param  non-empty-string  $authenticationPassword
+     * @param non-empty-string $authenticationPassword
+     * @return \BVP\Purchaser\PurchaserCore
      */
     #[\Override]
     public function setAuthenticationPassword(#[\SensitiveParameter] string $authenticationPassword): PurchaserCore
@@ -259,7 +268,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @param  non-empty-string  $purchasePassword
+     * @param non-empty-string $purchasePassword
+     * @return \BVP\Purchaser\PurchaserCore
      */
     #[\Override]
     public function setPurchasePassword(#[\SensitiveParameter] string $purchasePassword): PurchaserCore
@@ -275,7 +285,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * 締切をまたいで submit すると、弾かれるか最悪は次のレースに入る。
      * 入金だけ済んで投票していない状態（残高に残るだけ）に倒すのが安全側。
      *
-     * @param  int<0, max>  $marginSeconds
+     * @param ?\DateTimeInterface $deadline
+     * @param int<0, max> $marginSeconds
+     * @return \BVP\Purchaser\PurchaserCore
      */
     #[\Override]
     public function setDeadline(?DateTimeInterface $deadline, int $marginSeconds = 5): PurchaserCore
@@ -291,7 +303,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
      *
      * 一発勝負で再現できないので、無人運転するなら必ず設定すること。
      *
-     * @param  ?non-empty-string  $artifactDirectory
+     * @param ?non-empty-string $artifactDirectory
+     * @return \BVP\Purchaser\PurchaserCore
      */
     #[\Override]
     public function setArtifactDirectory(?string $artifactDirectory): PurchaserCore
@@ -302,7 +315,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @param  non-empty-string  $lockPath
+     * @param non-empty-string $lockPath
+     * @return \BVP\Purchaser\PurchaserCore
      */
     #[\Override]
     public function setLockPath(string $lockPath): PurchaserCore
@@ -314,6 +328,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
     /**
      * 残高照会のみ。投票も入金もしない。
+     *
+     * @return int
      */
     #[\Override]
     public function balance(): int
@@ -335,10 +351,12 @@ final class PurchaserCore implements Contracts\PurchaserCore
      *   4. 残高照会で $required を満たしたことを確認（入金の反映は非同期）
      *
      * 残高が既に足りていれば手順3を飛ばす。このとき手順2の照会が手順4の確認を兼ねる。
+     * 戻り値は最終的な残高。
      *
-     * @return int 最終的な残高
+     * @param int $required
+     * @return int
      *
-     * @throws PurchaserException
+     * @throws \BVP\Purchaser\PurchaserException
      */
     #[\Override]
     public function ensureBalance(int $required = self::DEFAULT_TARGET_BALANCE): int
@@ -348,11 +366,17 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @param  int  $number  レース番号（1〜12）
-     * @param  int  $type  賭式（単勝 => 1, 複勝 => 2, 2連単 => 3, 2連複 => 4, 拡連複 => 5, 3連単 => 6, 3連複 => 7）
-     * @param  non-empty-array<array-key, int>  $focuses  組番 => 購入金額
+     * $number はレース番号（1〜12）、$focuses は 組番 => 購入金額。
+     * $type は賭式で、単勝 => 1, 複勝 => 2, 2連単 => 3, 2連複 => 4,
+     * 拡連複 => 5, 3連単 => 6, 3連複 => 7。
      *
-     * @throws PurchaserException
+     * @param int $stadiumNumber
+     * @param int $number
+     * @param int $type
+     * @param non-empty-array<array-key, int> $focuses
+     * @return \BVP\Purchaser\Receipt
+     *
+     * @throws \BVP\Purchaser\PurchaserException 投票できたレースが1つも無かったとき
      */
     #[\Override]
     public function purchase(int $stadiumNumber, int $number, int $type, array $focuses): Receipt
@@ -382,7 +406,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * 締切をまたぐ・残高が届かないレースは、そのレースだけ飛ばして次へ進む。
      * 画面操作に失敗した場合は盤面が読めないので、以降のレースを中止する。
      *
-     * @param  non-empty-list<array{
+     * @param non-empty-list<array{
      *     stadiumNumber: int,
      *     number: int,
      *     type: int,
@@ -390,7 +414,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
      *     deadline?: ?DateTimeInterface
      * }>  $races  締切の早い順に並べること
      *
-     * @throws PurchaserException
+     * @return \BVP\Purchaser\BatchReceipt
+     * @throws \BVP\Purchaser\PurchaserException
      */
     #[\Override]
     public function purchaseMany(array $races): BatchReceipt
@@ -434,7 +459,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
     /**
      * ブラウザを起動する前に、全レースの買い目・レース番号・並び順を検証する。
      *
-     * @param  list<array{
+     * @param list<array{
      *     stadiumNumber: int,
      *     number: int,
      *     type: int,
@@ -448,7 +473,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
      *     deadline: ?DateTimeInterface
      * }>
      *
-     * @throws PurchaserException
+     * @throws \BVP\Purchaser\PurchaserException
      */
     private function planRaces(array $races): array
     {
@@ -529,6 +554,10 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * 残高を $required 円まで満たすのに必要な入金額（1,000円単位に切り上げ）。
      *
      * 足りていれば 0 を返す。ブラウザに依存しないので単体テストできる。
+     *
+     * @param int $balance
+     * @param int $required
+     * @return int
      */
     public static function requiredDepositAmount(int $balance, int $required): int
     {
@@ -544,8 +573,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
     /**
      * ロックを取り、ログインし、後始末までを面倒みる。
      *
-     * @param  callable(): mixed  $callback
-     * @param  non-empty-string  $context
+     * @param callable(): mixed $callback
+     * @param non-empty-string $context
+     * @return mixed
      */
     private function withSession(callable $callback, string $context): mixed
     {
@@ -576,6 +606,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
             $lock->release();
         }
     }
+    /**
+     * @return void
+     */
 
     private function login(): void
     {
@@ -625,6 +658,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * 時間切れで TimeoutException を投げる。旧実装が NoSuchElementException を
      * catch していたのは効いておらず、ダイアログが無い日は 10 秒待った末に
      * 購入全体が中断していた。
+     *
+     * @return void
      */
     private function dismissNewsDialog(): void
     {
@@ -637,6 +672,10 @@ final class PurchaserCore implements Contracts\PurchaserCore
             // 出ていなければ何もしない。
         }
     }
+    /**
+     * @param int $required
+     * @return int
+     */
 
     private function ensureBalanceInSession(int $required): int
     {
@@ -681,6 +720,10 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
         return $balance;
     }
+    /**
+     * @param int $amount
+     * @return void
+     */
 
     private function executeCharge(int $amount): void
     {
@@ -704,6 +747,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
         $this->click(WebDriverBy::id('closeChargecomp'));
         $this->recordStep('charge', $started);
     }
+    /**
+     * @return int
+     */
 
     private function fetchBalance(): int
     {
@@ -729,14 +775,17 @@ final class PurchaserCore implements Contracts\PurchaserCore
     /**
      * 計画したレースを順に処理する。
      *
-     * @param  non-empty-list<array{
+     * @param non-empty-list<array{
      *     stadiumNumber: int,
      *     number: int,
      *     slip: BetSlip,
      *     deadline: ?DateTimeInterface
      * }>  $plans
      *
-     * @throws PurchaserException
+     * @param int $balance
+     * @param float $startedAt
+     * @return \BVP\Purchaser\BatchReceipt
+     * @throws \BVP\Purchaser\PurchaserException
      */
     private function placeBatch(array $plans, int $balance, float $startedAt): BatchReceipt
     {
@@ -853,7 +902,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * 2レース目以降を1レース目とまったく同じ手順で処理できる。同じ場のときも
      * これを使う。「同じ場で投票する」はレース選択画面に直接入るため手順が分岐する。
      *
-     * @throws PurchaserException
+     * @param int $stadiumNumber
+     * @return void
+     * @throws \BVP\Purchaser\PurchaserException
      */
     private function returnToRaceSelect(int $stadiumNumber): void
     {
@@ -884,6 +935,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
      *
      * 読めなければ null を返し、呼び出し側が持っている値を使わせる。ここは
      * 残高の確定に使う経路ではないので、失敗を例外にする必要はない。
+     *
+     * @return ?int
      */
     private function headerBalance(): ?int
     {
@@ -933,6 +986,14 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
         return ['receiptNumber' => $receiptNumber, 'acceptedAmount' => $acceptedAmount];
     }
+    /**
+     * @param int $stadiumNumber
+     * @param int $number
+     * @param \BVP\Purchaser\BetSlip $slip
+     * @param int $balanceBefore
+     * @param ?\DateTimeInterface $deadline
+     * @return \BVP\Purchaser\Receipt
+     */
 
     private function placeBets(
         int $stadiumNumber,
@@ -1013,6 +1074,10 @@ final class PurchaserCore implements Contracts\PurchaserCore
             $accepted['acceptedAmount']
         );
     }
+    /**
+     * @param int $number
+     * @return void
+     */
 
     private function assertRaceNumber(int $number): void
     {
@@ -1034,7 +1099,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @param  non-empty-string  $step
+     * @param non-empty-string $step
+     * @param ?\DateTimeInterface $deadline
+     * @return void
      */
     private function assertDeadline(string $step, ?DateTimeInterface $deadline): void
     {
@@ -1051,6 +1118,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
             );
         }
     }
+    /**
+     * @return void
+     */
 
     private function assertCredentials(): void
     {
@@ -1080,7 +1150,8 @@ final class PurchaserCore implements Contracts\PurchaserCore
     /**
      * 一発勝負で再現できないので、失敗時の画面を必ず残す。
      *
-     * @param  non-empty-string  $context
+     * @param non-empty-string $context
+     * @return void
      */
     private function captureArtifacts(string $context): void
     {
@@ -1100,6 +1171,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
             // 証跡の保存に失敗しても、元の例外を握り潰さない。
         }
     }
+    /**
+     * @return \Facebook\WebDriver\Remote\RemoteWebDriver
+     */
 
     private function driver(): RemoteWebDriver
     {
@@ -1109,6 +1183,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
             $this->capabilities()
         );
     }
+    /**
+     * @return \Facebook\WebDriver\Remote\DesiredCapabilities
+     */
 
     private function capabilities(): DesiredCapabilities
     {
@@ -1129,7 +1206,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @param  ?int<1, max>  $timeout
+     * @param ?int<1, max> $timeout
+     * @param \Facebook\WebDriver\WebDriverBy $by
+     * @return \Facebook\WebDriver\Remote\RemoteWebElement
      */
     private function waitVisible(WebDriverBy $by, ?int $timeout = null): RemoteWebElement
     {
@@ -1140,7 +1219,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @param  ?int<1, max>  $timeout
+     * @param ?int<1, max> $timeout
+     * @param \Facebook\WebDriver\WebDriverBy $by
+     * @return \Facebook\WebDriver\Remote\RemoteWebElement
      */
     private function waitClickable(WebDriverBy $by, ?int $timeout = null): RemoteWebElement
     {
@@ -1162,7 +1243,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * ElementClickInterceptedException はクリックが対象に届く前に投げられるため、
      * 撃ち直しで二重に押してしまう心配はない。
      *
-     * @param  ?int<1, max>  $timeout
+     * @param ?int<1, max> $timeout
+     * @param \Facebook\WebDriver\WebDriverBy $by
+     * @return void
      */
     private function click(WebDriverBy $by, ?int $timeout = null): void
     {
@@ -1184,7 +1267,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * 待機条件は要素そのものを返すので、直後に findElement を撃ち直さない。
      * 往復が半分になるうえ、待機と取得の間に要素が差し替わる隙も消える。
      *
-     * @param  ?int<1, max>  $timeout
+     * @param ?int<1, max> $timeout
+     * @param \Facebook\WebDriver\WebDriverExpectedCondition $condition
+     * @return \Facebook\WebDriver\Remote\RemoteWebElement
      */
     private function awaited(?int $timeout, WebDriverExpectedCondition $condition): RemoteWebElement
     {
@@ -1200,12 +1285,17 @@ final class PurchaserCore implements Contracts\PurchaserCore
     }
 
     /**
-     * @param  non-empty-string  $step
+     * @param non-empty-string $step
+     * @param float $startedAt
+     * @return void
      */
     private function recordStep(string $step, float $startedAt): void
     {
         $this->stepMilliseconds[$step] = (int) round((microtime(true) - $startedAt) * 1000.0);
     }
+    /**
+     * @return void
+     */
 
     private function closeSession(): void
     {

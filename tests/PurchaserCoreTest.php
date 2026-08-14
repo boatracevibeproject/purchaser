@@ -24,6 +24,8 @@ final class PurchaserCoreTest extends PHPUnitTestCase
     /**
      * ログイン・投票ウィンドウの生成・お知らせダイアログ・残高照会の DOM を、
      * 一切お金を動かさずに通す。サイト改修の検知に使える。
+     *
+     * @return void
      */
     public function test_balance_can_be_fetched(): void
     {
@@ -36,6 +38,8 @@ final class PurchaserCoreTest extends PHPUnitTestCase
 
     /**
      * 冪等であること（2回呼んでも積み増さないこと）まで確認する。
+     *
+     * @return void
      */
     public function test_ensure_balance_is_idempotent(): void
     {
@@ -49,6 +53,9 @@ final class PurchaserCoreTest extends PHPUnitTestCase
         $second = $purchaser->ensureBalance(PurchaserCore::DEFAULT_TARGET_BALANCE);
         $this->assertSame($first, $second, '2回目の ensureBalance() で残高が増えている（入金が冪等でない）');
     }
+    /**
+     * @return void
+     */
 
     public function test_purchase(): void
     {
@@ -69,6 +76,8 @@ final class PurchaserCoreTest extends PHPUnitTestCase
      *
      * 完了画面から場選択画面へ戻る手順（return-to-race-select）は、この経路でしか
      * 通らない。レース番号は実行する日の発売状況に合わせて書き換えること。
+     *
+     * @return void
      */
     public function test_purchase_many(): void
     {
@@ -103,6 +112,9 @@ final class PurchaserCoreTest extends PHPUnitTestCase
             $batch->receipts[1]->stepMilliseconds['login'] ?? null
         );
     }
+    /**
+     * @return \BVP\Purchaser\PurchaserCore
+     */
 
     private function purchaser(): PurchaserCore
     {

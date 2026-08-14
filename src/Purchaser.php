@@ -25,6 +25,9 @@ namespace BVP\Purchaser;
 final class Purchaser implements Contracts\Purchaser
 {
     private static ?Contracts\Purchaser $instance = null;
+    /**
+     * @param \BVP\Purchaser\Contracts\PurchaserCore $purchaser
+     */
 
     public function __construct(private readonly Contracts\PurchaserCore $purchaser)
     {
@@ -32,8 +35,9 @@ final class Purchaser implements Contracts\Purchaser
     }
 
     /**
-     * @param  non-empty-string  $name
-     * @param  list<mixed>  $arguments
+     * @param non-empty-string $name
+     * @param list<mixed> $arguments
+     * @return mixed
      */
     public function __call(string $name, array $arguments): mixed
     {
@@ -41,8 +45,9 @@ final class Purchaser implements Contracts\Purchaser
     }
 
     /**
-     * @param  non-empty-string  $name
-     * @param  list<mixed>  $arguments
+     * @param non-empty-string $name
+     * @param list<mixed> $arguments
+     * @return mixed
      */
     public static function __callStatic(string $name, array $arguments): mixed
     {
@@ -50,12 +55,14 @@ final class Purchaser implements Contracts\Purchaser
     }
 
     /**
-     * @param  ?non-empty-string  $seleniumServerUrl
-     * @param  ?int<1000, max>  $maxDepositAmount
-     * @param  ?non-empty-string  $subscriberNumber
-     * @param  ?non-empty-string  $personalIdentificationNumber
-     * @param  ?non-empty-string  $authenticationPassword
-     * @param  ?non-empty-string  $purchasePassword
+     * @param ?non-empty-string $seleniumServerUrl
+     * @param ?int<1000, max> $maxDepositAmount
+     * @param ?non-empty-string $subscriberNumber
+     * @param ?non-empty-string $personalIdentificationNumber
+     * @param ?non-empty-string $authenticationPassword
+     * @param ?non-empty-string $purchasePassword
+     * @param ?\BVP\Purchaser\Contracts\PurchaserCore $purchaserCore
+     * @return \BVP\Purchaser\Contracts\Purchaser
      */
     #[\Override]
     public static function getInstance(
@@ -80,12 +87,14 @@ final class Purchaser implements Contracts\Purchaser
     }
 
     /**
-     * @param  ?non-empty-string  $seleniumServerUrl
-     * @param  ?int<1000, max>  $maxDepositAmount
-     * @param  ?non-empty-string  $subscriberNumber
-     * @param  ?non-empty-string  $personalIdentificationNumber
-     * @param  ?non-empty-string  $authenticationPassword
-     * @param  ?non-empty-string  $purchasePassword
+     * @param ?non-empty-string $seleniumServerUrl
+     * @param ?int<1000, max> $maxDepositAmount
+     * @param ?non-empty-string $subscriberNumber
+     * @param ?non-empty-string $personalIdentificationNumber
+     * @param ?non-empty-string $authenticationPassword
+     * @param ?non-empty-string $purchasePassword
+     * @param ?\BVP\Purchaser\Contracts\PurchaserCore $purchaserCore
+     * @return \BVP\Purchaser\Contracts\Purchaser
      */
     #[\Override]
     public static function createInstance(
@@ -108,6 +117,9 @@ final class Purchaser implements Contracts\Purchaser
             )
         );
     }
+    /**
+     * @return void
+     */
 
     #[\Override]
     public static function resetInstance(): void

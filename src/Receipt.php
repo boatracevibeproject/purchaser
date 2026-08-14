@@ -17,13 +17,18 @@ use DateTimeImmutable;
 final readonly class Receipt
 {
     /**
-     * @param  non-empty-list<array{legs: non-empty-list<string>, amount: int}>  $bets
-     * @param  int  $balanceBefore  投票直前の残高
-     * @param  int  $elapsedMilliseconds  purchase() 全体の所要時間
-     * @param  array  $stepMilliseconds  ステップ名 => 所要時間（m2 に間に合うかの実測用）
-     * @param  string  $confirmationText  完了画面（thanksArea）のテキスト
-     * @param  ?string  $receiptNumber  契約番号。読めなければ null
-     * @param  ?int  $acceptedAmount  購入成立金額。読めなければ null
+     * @param non-empty-list<array{legs: non-empty-list<string>, amount: int}> $bets
+     * @param int $balanceBefore  投票直前の残高
+     * @param int $elapsedMilliseconds  purchase() 全体の所要時間
+     * @param array $stepMilliseconds  ステップ名 => 所要時間（m2 に間に合うかの実測用）
+     * @param string $confirmationText  完了画面（thanksArea）のテキスト
+     * @param ?string $receiptNumber  契約番号。読めなければ null
+     * @param ?int $acceptedAmount  購入成立金額。読めなければ null
+     * @param int $stadiumNumber
+     * @param int $raceNumber
+     * @param int $betType
+     * @param int $totalAmount
+     * @param \DateTimeImmutable $submittedAt
      */
     public function __construct(
         public int $stadiumNumber,

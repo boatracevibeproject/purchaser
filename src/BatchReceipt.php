@@ -15,12 +15,17 @@ namespace BVP\Purchaser;
 final readonly class BatchReceipt
 {
     /**
-     * @param  non-empty-list<Receipt>  $receipts  投票できたレース
-     * @param  list<array{stadiumNumber: int, raceNumber: int, reason: string}>  $skipped  投票しなかったレースと理由
-     * @param  ?array{stadiumNumber: int, raceNumber: int, reason: string}  $failure  以降を中止させた失敗
-     * @param  int  $totalAmount  投票できたレースの購入金額合計
-     * @param  int  $elapsedMilliseconds  purchaseMany() 全体の所要時間
-     * @param  array<string, int>  $stepMilliseconds  セッション単位のステップ（ログイン・残高確保）
+     * $receipts は投票できたレース、$skipped は投票しなかったレースと理由、
+     * $failure は以降を中止させた失敗。$totalAmount は投票できたレースの購入金額合計、
+     * $elapsedMilliseconds は purchaseMany() 全体の所要時間、$stepMilliseconds は
+     * セッション単位のステップ（ログイン・残高確保）。
+     *
+     * @param non-empty-list<\BVP\Purchaser\Receipt> $receipts
+     * @param list<array{stadiumNumber: int, raceNumber: int, reason: string}> $skipped
+     * @param ?array{stadiumNumber: int, raceNumber: int, reason: string} $failure
+     * @param int $totalAmount
+     * @param int $elapsedMilliseconds
+     * @param array<string, int> $stepMilliseconds
      */
     public function __construct(
         public array $receipts,
@@ -47,6 +52,8 @@ final readonly class BatchReceipt
      * 途中で中止したかどうか。
      *
      * 例外ではなく戻り値で伝えるので、無人運転するならここを見て通知すること。
+     *
+     * @return bool
      */
     public function hasFailure(): bool
     {

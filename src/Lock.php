@@ -21,6 +21,10 @@ final class Lock
      * @var ?resource
      */
     private mixed $handle = null;
+    /**
+     * @param string $path
+     * @param float $timeoutSeconds
+     */
 
     public function __construct(
         private readonly string $path,
@@ -30,7 +34,8 @@ final class Lock
     }
 
     /**
-     * @throws PurchaserException
+     * @return void
+     * @throws \BVP\Purchaser\PurchaserException
      */
     public function acquire(): void
     {
@@ -60,6 +65,9 @@ final class Lock
 
         $this->handle = $handle;
     }
+    /**
+     * @return void
+     */
 
     public function release(): void
     {
