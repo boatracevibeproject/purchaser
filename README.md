@@ -88,11 +88,92 @@ print_r($receipt->stepMilliseconds);
 
 戻り値の `Receipt` に何をいくら買ったかが入るので、そのまま購入履歴に残せます。
 
+### 複数レースをまとめて買う
+
+`purchaseMany()` は、**1回のログインで複数レース**を処理します。
+ログイン・投票ウィンドウの生成・残高の確保はセッションに1回で済み、
+2レース目以降は投票完了画面から場選択画面へ戻って同じ手順を繰り返します。
+
+```php
+$batch = Purchaser::setSubscriberNumber('xxxxxxxx')
+    ->setPersonalIdentificationNumber('xxxx')
+    ->setAuthenticationPassword('xxxxxx')
+    ->setPurchasePassword('xxxxxx')
+    ->setArtifactDirectory(__DIR__ . '/storage/purchaser')
+    ->setMaxTotalAmount(10000) // 1レースの上限
+    ->setMaxBatchAmount(30000) // 1セッション合計の上限
+    ->purchaseMany([
+        [
+            'stadiumNumber' => 24,
+            'number' => 11,
+            'type' => 6,
+            'focuses' => ['1-2-3' => 100, '1-2-4' => 100],
+            'deadline' => new DateTimeImmutable('2026-08-08 15:02:00'),
+        ],
+        [
+            'stadiumNumber' => 24,
+            'number' => 12,
+            'type' => 6,
+            'focuses' => ['1-3-2' => 100],
+            'deadline' => new DateTimeImmutable('2026-08-08 15:32:00'),
+        ],
+    ]);
+
+foreach ($batch->receipts as $receipt) {
+    echo $receipt->raceNumber;     // 11, 12
+    echo $receipt->receiptNumber;  // 契約番号
+}
+
+echo $batch->totalAmount; // 300
+```
+
+レースは**締切の早い順**に並べます。逆順になっていると、ブラウザを起動する前に例外にします
+（黙って並べ替えると呼び出し側の意図と食い違うため）。
+`'deadline'` を省いたレースには `setDeadline()` の値が使われます。
+
+残高は**全レースの合計で1回だけ**満たします。レースの合間に入金と反映待ち（最大60秒）が
+入ると次の締切に間に合わないので、入金はセッションの先頭に置き切ります。
+既定の入金上限は 10,000 円なので、合計がそれを超えるなら `setMaxDepositAmount()` も上げてください。
+
+#### 途中で失敗したとき
+
+`purchaseMany()` は、**投票できたレースの控えを必ず返します**。例外にすると、既に動いた
+お金の記録が残らないからです。中止したかどうかは戻り値で見てください。
+
+```php
+if ($batch->hasFailure()) {
+    // ここまでの $batch->receipts は成立している
+    error_log($batch->failure['reason']);
+}
+
+foreach ($batch->skipped as $skipped) {
+    error_log("{$skipped['raceNumber']}R: {$skipped['reason']}");
+}
+```
+
+| 起きたこと | 扱い |
+|---|---|
+| 買い目・レース番号・金額が不正 | **全レース中止**。ブラウザを起動する前に例外 |
+| 締切をまたいだ | そのレースだけ飛ばして次へ（`skipped`） |
+| 残高が足りない | そのレースだけ飛ばして次へ（`skipped`） |
+| 画面操作に失敗した | 以降のレースを中止（`failure`）。盤面が読めない状態を次に持ち越さない |
+| 購入成立金額が投票額と合わない | 以降のレースを中止（`failure`） |
+| 1レースも投票できなかった | 例外。単発の `purchase()` と同じ |
+
+最後の「購入成立金額」は完了画面の値です。締切済などで一部のベットが不成立でも
+完了画面には着くので、金額を突き合わせて気づけるようにしてあります
+（`Receipt::$acceptedAmount`。画面から読めなければ `null` になり、判定はしません）。
+
+なお `purchaseMany()` は**同じ節のレースをまとめて処理する**ことを想定しています。
+1レース目と最終レースが1時間以上離れるような使い方では、テレボート側のセッション切れと
+ロックの占有時間が問題になるので、その単位で呼び分けてください。
+
 ### 安全弁
 
 | メソッド | 既定 | 役割 |
 |---|---|---|
 | `setMaxTotalAmount()` | 10,000 円 | 1レースの購入金額合計の上限。呼び出し側のバグを止める |
+| `setMaxBatchAmount()` | `setMaxTotalAmount()` の値 | 1セッションの購入金額合計の上限。N レースで N 倍まで通るのを止める |
 | `setMaxDepositAmount()` | 10,000 円 | 1回の入金指示の上限。想定外の巨額入金を止める |
 | `setDeadline()` | なし | 締切間際になったら**投票せずに**中止する |
 | `setArtifactDirectory()` | なし | 失敗時にスクリーンショットと HTML を保存する |

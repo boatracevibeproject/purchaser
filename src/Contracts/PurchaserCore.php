@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BVP\Purchaser\Contracts;
 
+use BVP\Purchaser\BatchReceipt;
 use BVP\Purchaser\Receipt;
 use DateTimeInterface;
 
@@ -21,6 +22,11 @@ interface PurchaserCore
      * @param  int<100, max>  $maxTotalAmount
      */
     public function setMaxTotalAmount(int $maxTotalAmount): \BVP\Purchaser\PurchaserCore;
+
+    /**
+     * @param  ?int<100, max>  $maxBatchAmount
+     */
+    public function setMaxBatchAmount(?int $maxBatchAmount): \BVP\Purchaser\PurchaserCore;
 
     /**
      * @param  non-empty-string  $subscriberNumber
@@ -65,4 +71,15 @@ interface PurchaserCore
      * @param  non-empty-array<array-key, int>  $focuses
      */
     public function purchase(int $stadiumNumber, int $number, int $type, array $focuses): Receipt;
+
+    /**
+     * @param  non-empty-list<array{
+     *     stadiumNumber: int,
+     *     number: int,
+     *     type: int,
+     *     focuses: non-empty-array<array-key, int>,
+     *     deadline?: ?DateTimeInterface
+     * }>  $races
+     */
+    public function purchaseMany(array $races): BatchReceipt;
 }

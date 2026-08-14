@@ -64,6 +64,46 @@ final class PurchaserCoreTest extends PHPUnitTestCase
         $this->assertSame(12, $receipt->raceNumber);
     }
 
+    /**
+     * 1回のログインで2レース処理する。
+     *
+     * 完了画面から場選択画面へ戻る手順（return-to-race-select）は、この経路でしか
+     * 通らない。レース番号は実行する日の発売状況に合わせて書き換えること。
+     */
+    public function test_purchase_many(): void
+    {
+        $this->requireOptIn('PURCHASER_E2E_PURCHASE');
+
+        $batch = $this->purchaser()
+            ->setMaxBatchAmount(1000)
+            ->purchaseMany([
+                ['stadiumNumber' => 24, 'number' => 11, 'type' => 6, 'focuses' => ['1-2-3' => 100]],
+                ['stadiumNumber' => 24, 'number' => 12, 'type' => 6, 'focuses' => ['1-2-3' => 100]],
+            ]);
+
+        $this->assertFalse(
+            $batch->hasFailure(),
+            '途中で中止している: '.(string) json_encode($batch->failure, JSON_UNESCAPED_UNICODE)
+        );
+
+        $this->assertSame([], $batch->skipped);
+        $this->assertSame(2, $batch->count());
+        $this->assertSame(200, $batch->totalAmount);
+        $this->assertSame(11, $batch->receipts[0]->raceNumber);
+        $this->assertSame(12, $batch->receipts[1]->raceNumber);
+
+        // 2レース目だけが通る画面遷移。ここが欠けていれば1レース目を撮り直しているだけ。
+        $this->assertArrayNotHasKey('return-to-race-select', $batch->receipts[0]->stepMilliseconds);
+        $this->assertArrayHasKey('return-to-race-select', $batch->receipts[1]->stepMilliseconds);
+
+        // ログインは1回で済んでいるので、2レース目に login の計測が乗っていても
+        // それはセッション単位の値（レースごとに再ログインしていない）。
+        $this->assertSame(
+            $batch->stepMilliseconds['login'] ?? null,
+            $batch->receipts[1]->stepMilliseconds['login'] ?? null
+        );
+    }
+
     private function purchaser(): PurchaserCore
     {
         // コンストラクタではブラウザを起動しないので、スキップされるテストでも無害。

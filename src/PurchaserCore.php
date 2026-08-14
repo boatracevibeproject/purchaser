@@ -71,6 +71,22 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
     private const LOCATOR_BALANCE = '.gray > .col3';
 
+    /**
+     * ヘッダの購入限度額。残高照会ダイアログの LOCATOR_BALANCE と同じ
+     * currentBetLimitAmount を出しているので、レース間の残高確認はここで足りる。
+     */
+    private const LOCATOR_HEADER_BALANCE = '#currentBetLimitAmount';
+
+    /**
+     * 投票完了画面の契約番号・購入成立金額の入れ物。
+     */
+    private const LOCATOR_CONFIRMATION = '#confirmationArea';
+
+    /**
+     * 投票完了画面の「場を変更して投票する」。ログイン直後と同じ場選択画面に戻る。
+     */
+    private const LOCATOR_MODIFY_JYO_BET = 'modifyJyoBetForm';
+
     private ?RemoteWebDriver $driver = null;
 
     private ?DateTimeInterface $deadline = null;
@@ -89,6 +105,13 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * @var non-empty-string
      */
     private string $lockPath;
+
+    /**
+     * 1セッションの購入金額合計の上限（円）。null なら maxTotalAmount を流用する。
+     *
+     * @var ?int<100, max>
+     */
+    private ?int $maxBatchAmount = null;
 
     /**
      * @var array<string, int>
@@ -141,6 +164,22 @@ final class PurchaserCore implements Contracts\PurchaserCore
     public function setMaxTotalAmount(int $maxTotalAmount): PurchaserCore
     {
         $this->maxTotalAmount = $maxTotalAmount;
+
+        return $this;
+    }
+
+    /**
+     * 1セッション（purchaseMany の1回）の購入金額合計の上限。
+     *
+     * setMaxTotalAmount() は1レースの上限なので、N レース買えば N 倍まで通ってしまう。
+     * null を渡すと maxTotalAmount をそのまま流用する。
+     *
+     * @param  ?int<100, max>  $maxBatchAmount
+     */
+    #[\Override]
+    public function setMaxBatchAmount(?int $maxBatchAmount): PurchaserCore
+    {
+        $this->maxBatchAmount = $maxBatchAmount;
 
         return $this;
     }
@@ -278,35 +317,172 @@ final class PurchaserCore implements Contracts\PurchaserCore
     #[\Override]
     public function purchase(int $stadiumNumber, int $number, int $type, array $focuses): Receipt
     {
-        if ($stadiumNumber < 1 || $stadiumNumber > 24) {
-            throw new PurchaserException("レース場が不正です。stadiumNumber={$stadiumNumber}（1〜24）");
+        $batch = $this->purchaseMany([[
+            'stadiumNumber' => $stadiumNumber,
+            'number' => $number,
+            'type' => $type,
+            'focuses' => $focuses,
+            'deadline' => $this->deadline,
+        ]]);
+
+        // 1レースも投票できなければ purchaseMany() が例外を投げているので、ここは必ず埋まる。
+        return $batch->receipts[0];
+    }
+
+    /**
+     * 複数レースを1回のログインで処理する。
+     *
+     * ログイン・投票ウィンドウの生成・残高の確保はセッションに1回で済み、
+     * 2レース目以降は完了画面から場選択画面へ戻って同じ手順を繰り返す。
+     *
+     * 途中で失敗しても例外にはせず、そこまでの Receipt を必ず返す。既に動いた
+     * お金の記録を落とさないため。中止したかどうかは hasFailure() で見ること。
+     * ただし1レースも投票できなかった場合だけは、単発の purchase() と揃えて例外にする。
+     *
+     * 締切をまたぐ・残高が届かないレースは、そのレースだけ飛ばして次へ進む。
+     * 画面操作に失敗した場合は盤面が読めないので、以降のレースを中止する。
+     *
+     * @param  non-empty-list<array{
+     *     stadiumNumber: int,
+     *     number: int,
+     *     type: int,
+     *     focuses: non-empty-array<array-key, int>,
+     *     deadline?: ?DateTimeInterface
+     * }>  $races  締切の早い順に並べること
+     *
+     * @throws PurchaserException
+     */
+    #[\Override]
+    public function purchaseMany(array $races): BatchReceipt
+    {
+        // ブラウザを起動する前に全レースを検証し、直せない入力はここで落とす。
+        $plans = $this->planRaces($races);
+
+        $required = 0;
+
+        foreach ($plans as $plan) {
+            $required += $plan['slip']->totalAmount;
         }
 
-        if ($number < 1 || $number > 12) {
-            throw new PurchaserException("レース番号が不正です。number={$number}（1〜12）");
-        }
+        $batchLimit = $this->maxBatchAmount ?? $this->maxTotalAmount;
 
-        // ブラウザを起動する前に買い目を検証し、直せない入力はここで落とす。
-        $slip = BetSlip::fromFocuses($focuses, $type);
-
-        if ($this->maxTotalAmount !== null && $slip->totalAmount > $this->maxTotalAmount) {
+        if ($batchLimit !== null && $required > $batchLimit) {
             throw new PurchaserException(
-                "購入金額の合計 {$slip->totalAmount} 円が上限 {$this->maxTotalAmount} 円を超えています。"
+                "購入金額の合計 {$required} 円が1セッションの上限 {$batchLimit} 円を超えています。"
+                .'（'.count($plans).' レース）'
             );
         }
 
-        $this->assertDeadline('purchase の開始');
+        // 先頭のレースにすら間に合わないなら、ブラウザを起動する前に落とす。
+        $this->assertDeadline('purchase の開始', $plans[0]['deadline']);
 
-        /** @var Receipt */
+        $started = microtime(true);
+
+        /** @var BatchReceipt */
         return $this->withSession(
-            function () use ($stadiumNumber, $number, $slip): Receipt {
-                // 入金と反映待ちを投票の前に置き切る。ここを抜けた時点で残高は足りている。
-                $balance = $this->ensureBalanceInSession($slip->totalAmount);
+            function () use ($plans, $required, $started): BatchReceipt {
+                // 入金と反映待ちを全レース分まとめて先に置き切る。
+                // ここを抜けた時点で、レース間で入金を挟む必要はなくなっている。
+                $balance = $this->ensureBalanceInSession($required);
 
-                return $this->placeBets($stadiumNumber, $number, $slip, $balance);
+                return $this->placeBatch($plans, $balance, $started);
             },
-            'purchase'
+            'purchase-many'
         );
+    }
+
+    /**
+     * ブラウザを起動する前に、全レースの買い目・レース番号・並び順を検証する。
+     *
+     * @param  list<array{
+     *     stadiumNumber: int,
+     *     number: int,
+     *     type: int,
+     *     focuses: non-empty-array<array-key, int>,
+     *     deadline?: ?DateTimeInterface
+     * }>  $races
+     * @return non-empty-list<array{
+     *     stadiumNumber: int,
+     *     number: int,
+     *     slip: BetSlip,
+     *     deadline: ?DateTimeInterface
+     * }>
+     *
+     * @throws PurchaserException
+     */
+    private function planRaces(array $races): array
+    {
+        $plans = [];
+        $seen = [];
+        $previousDeadline = null;
+
+        foreach ($races as $index => $race) {
+            $stadiumNumber = $race['stadiumNumber'];
+            $number = $race['number'];
+            $type = $race['type'];
+
+            // 個別の締切が無ければ setDeadline() の値を使う。安全側に倒すため、
+            // 「指定が無い＝締切を見ない」ではなく「セッション共通の締切を見る」。
+            $deadline = $race['deadline'] ?? $this->deadline;
+
+            if ($stadiumNumber < 1 || $stadiumNumber > 24) {
+                throw new PurchaserException("レース場が不正です。stadiumNumber={$stadiumNumber}（1〜24）");
+            }
+
+            if ($number < 1 || $number > 12) {
+                throw new PurchaserException("レース番号が不正です。number={$number}（1〜12）");
+            }
+
+            // 同じレースの同じ賭式を2件に分けるのは、まず呼び出し側のバグ。
+            // 賭式が違えば別物なので、そこまでは通す。
+            $key = $stadiumNumber.'-'.$number.'-'.$type;
+
+            if (isset($seen[$key])) {
+                throw new PurchaserException(
+                    "同じレース・同じ賭式が重複しています。stadiumNumber={$stadiumNumber} / "
+                    ."number={$number} / type={$type}。買い目を1件にまとめてください。"
+                );
+            }
+
+            $seen[$key] = true;
+            $slip = BetSlip::fromFocuses($race['focuses'], $type);
+
+            if ($this->maxTotalAmount !== null && $slip->totalAmount > $this->maxTotalAmount) {
+                throw new PurchaserException(
+                    "購入金額の合計 {$slip->totalAmount} 円が1レースの上限 {$this->maxTotalAmount} 円を"
+                    ."超えています。stadiumNumber={$stadiumNumber} / number={$number}"
+                );
+            }
+
+            // 締切の早いレースを後ろに置くと、前のレースを処理する間に締切をまたぐ。
+            // 黙って並べ替えると呼び出し側の意図と食い違うので、ここで気づかせる。
+            if ($deadline !== null
+                && $previousDeadline !== null
+                && $deadline->getTimestamp() < $previousDeadline->getTimestamp()
+            ) {
+                throw new PurchaserException(
+                    "レースが締切の早い順に並んでいません。{$index} 番目（0 始まり）の "
+                    ."{$number}R の締切が、その前のレースより早くなっています。"
+                );
+            }
+
+            if ($deadline !== null) {
+                $previousDeadline = $deadline;
+            }
+
+            $plans[] = [
+                'stadiumNumber' => $stadiumNumber,
+                'number' => $number,
+                'slip' => $slip,
+                'deadline' => $deadline,
+            ];
+        }
+
+        if ($plans === []) {
+            throw new PurchaserException('レースが空です。');
+        }
+
+        return $plans;
     }
 
     /**
@@ -510,10 +686,223 @@ final class PurchaserCore implements Contracts\PurchaserCore
         return (int) $digits;
     }
 
-    private function placeBets(int $stadiumNumber, int $number, BetSlip $slip, int $balanceBefore): Receipt
+    /**
+     * 計画したレースを順に処理する。
+     *
+     * @param  non-empty-list<array{
+     *     stadiumNumber: int,
+     *     number: int,
+     *     slip: BetSlip,
+     *     deadline: ?DateTimeInterface
+     * }>  $plans
+     *
+     * @throws PurchaserException
+     */
+    private function placeBatch(array $plans, int $balance, float $startedAt): BatchReceipt
+    {
+        // ログインと残高確保はセッション全体の費用なので、各レースの計測に重ねて持たせる。
+        $sessionSteps = $this->stepMilliseconds;
+
+        $receipts = [];
+        $skipped = [];
+        $failure = null;
+        $totalAmount = 0;
+        $onCompletionScreen = false;
+
+        foreach ($plans as $plan) {
+            $slip = $plan['slip'];
+            $race = ['stadiumNumber' => $plan['stadiumNumber'], 'raceNumber' => $plan['number']];
+
+            if ($failure !== null) {
+                $skipped[] = $race + ['reason' => '先行するレースが失敗したため、以降を中止しました。'];
+
+                continue;
+            }
+
+            try {
+                $this->assertDeadline($plan['number'].'R の投票', $plan['deadline']);
+            } catch (PurchaserException $exception) {
+                // 締切をまたいだのはこのレースだけ。後続まで落とす理由はない。
+                $skipped[] = $race + ['reason' => $exception->getMessage()];
+
+                continue;
+            }
+
+            // 完了画面でもヘッダの購入限度額は読めるので、照会ダイアログを開かずに済ませる。
+            if ($onCompletionScreen) {
+                $balance = $this->headerBalance() ?? $balance;
+            }
+
+            // 全レース分は確保済みなので、ここで足りないのは想定外の減り方をしたとき。
+            // 締切前に入金の反映を待つ余裕はないので、このレースは諦める。
+            if ($balance < $slip->totalAmount) {
+                $skipped[] = $race + [
+                    'reason' => "残高 {$balance} 円が購入金額 {$slip->totalAmount} 円に足りません。",
+                ];
+
+                continue;
+            }
+
+            try {
+                $this->stepMilliseconds = $sessionSteps;
+
+                if ($onCompletionScreen) {
+                    $this->returnToRaceSelect($plan['stadiumNumber']);
+                    $onCompletionScreen = false;
+                }
+
+                $receipt = $this->placeBets(
+                    $plan['stadiumNumber'],
+                    $plan['number'],
+                    $slip,
+                    $balance,
+                    $plan['deadline']
+                );
+
+                $onCompletionScreen = true;
+                $receipts[] = $receipt;
+                $totalAmount += $receipt->totalAmount;
+                $balance -= $receipt->totalAmount;
+
+                // 完了画面に着いても、締切済などで一部が不成立になることがある
+                // （BOAT.code の acceptcode_55 等）。額が合わないなら以降は進めない。
+                if ($receipt->acceptedAmount !== null && $receipt->acceptedAmount !== $slip->totalAmount) {
+                    $failure = $race + [
+                        'reason' => "購入成立金額 {$receipt->acceptedAmount} 円が"
+                            ."投票額 {$slip->totalAmount} 円と一致しません。",
+                    ];
+                }
+            } catch (Throwable $exception) {
+                // 1レースも投票できていないなら、単発の purchase() と揃えて例外にする。
+                if ($receipts === []) {
+                    throw $exception;
+                }
+
+                // 買い目を登録した状態で落ちていると盤面が読めない。
+                // 次のレースに持ち越さず、ここで打ち切る。
+                $this->captureArtifacts("purchase-many-{$plan['stadiumNumber']}-{$plan['number']}");
+                $failure = $race + ['reason' => $exception->getMessage()];
+            }
+        }
+
+        $this->stepMilliseconds = $sessionSteps;
+
+        if ($receipts === []) {
+            $reasons = array_map(
+                static fn (array $entry): string => $entry['reason'],
+                $skipped
+            );
+
+            throw new PurchaserException('投票できたレースがありません。'.implode(' / ', $reasons));
+        }
+
+        return new BatchReceipt(
+            $receipts,
+            $skipped,
+            $failure,
+            $totalAmount,
+            (int) round((microtime(true) - $startedAt) * 1000.0),
+            $sessionSteps
+        );
+    }
+
+    /**
+     * 投票完了画面から場選択画面へ戻る。
+     *
+     * 「場を変更して投票する」はログイン直後と同じ場選択画面に戻るので、
+     * 2レース目以降を1レース目とまったく同じ手順で処理できる。同じ場のときも
+     * これを使う。「同じ場で投票する」はレース選択画面に直接入るため手順が分岐する。
+     *
+     * @throws PurchaserException
+     */
+    private function returnToRaceSelect(int $stadiumNumber): void
     {
         $started = microtime(true);
-        $this->assertDeadline('レースの選択');
+
+        try {
+            $this->click(WebDriverBy::id(self::LOCATOR_MODIFY_JYO_BET));
+
+            // 遷移したことをここで見ておく。空振りしていると、次のレース場の
+            // クリックが「要素が出ない」形で時間切れになり、原因が読めなくなる。
+            $this->waitClickable(WebDriverBy::id('jyo'.sprintf('%02d', $stadiumNumber)));
+        } catch (Throwable $exception) {
+            throw new PurchaserException(
+                '投票完了画面から場選択画面へ戻れませんでした。画面構造の変化を疑ってください。',
+                0,
+                $exception
+            );
+        }
+
+        $this->recordStep('return-to-race-select', $started);
+    }
+
+    /**
+     * ヘッダに出ている購入限度額。
+     *
+     * 残高照会ダイアログと同じ currentBetLimitAmount なので、レース間の確認は
+     * ダイアログの開閉（4クリック）を挟まずにこれで済ませる。
+     *
+     * 読めなければ null を返し、呼び出し側が持っている値を使わせる。ここは
+     * 残高の確定に使う経路ではないので、失敗を例外にする必要はない。
+     */
+    private function headerBalance(): ?int
+    {
+        try {
+            $text = $this->driver()
+                ->findElement(WebDriverBy::cssSelector(self::LOCATOR_HEADER_BALANCE))
+                ->getText();
+        } catch (Throwable $exception) {
+            return null;
+        }
+
+        $digits = preg_replace('/[^0-9]/', '', $text);
+
+        if ($digits === null || $digits === '') {
+            return null;
+        }
+
+        return (int) $digits;
+    }
+
+    /**
+     * 完了画面の契約番号と購入成立金額。
+     *
+     * 読めなければ null を返す。ここで例外にすると、投票が成立した直後に
+     * 「失敗した」と誤って伝えることになる。
+     *
+     * @return array{receiptNumber: ?string, acceptedAmount: ?int}
+     */
+    private function fetchConfirmation(): array
+    {
+        try {
+            $text = $this->driver()
+                ->findElement(WebDriverBy::cssSelector(self::LOCATOR_CONFIRMATION))
+                ->getText();
+        } catch (Throwable $exception) {
+            return ['receiptNumber' => null, 'acceptedAmount' => null];
+        }
+
+        // 表の組み方が変わっても効くように、行ではなくラベルを手がかりにする。
+        $receiptNumber = preg_match('/契約番号\s*([0-9A-Za-z\-]+)/u', $text, $matches) === 1
+            ? $matches[1]
+            : null;
+
+        $acceptedAmount = preg_match('/購入成立金額\s*([0-9,]+)\s*円/u', $text, $matches) === 1
+            ? (int) str_replace(',', '', $matches[1])
+            : null;
+
+        return ['receiptNumber' => $receiptNumber, 'acceptedAmount' => $acceptedAmount];
+    }
+
+    private function placeBets(
+        int $stadiumNumber,
+        int $number,
+        BetSlip $slip,
+        int $balanceBefore,
+        ?DateTimeInterface $deadline
+    ): Receipt {
+        $started = microtime(true);
+        $this->assertDeadline('レースの選択', $deadline);
 
         $this->click(WebDriverBy::id('jyo'.sprintf('%02d', $stadiumNumber)));
         $this->click(WebDriverBy::id('selRaceNo'.sprintf('%02d', $number)));
@@ -543,7 +932,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
         // 買い目の登録からここまでで数秒経っている。締切をまたいで次のレースに
         // 繰り上がっていないことを、submit の直前にもう一度確認する。
         $this->assertRaceNumber($number);
-        $this->assertDeadline('投票の確定');
+        $this->assertDeadline('投票の確定', $deadline);
 
         $submitted = microtime(true);
         $this->click(WebDriverBy::cssSelector('.btnSubmit'));
@@ -567,6 +956,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
         }
 
         $this->recordStep('submit', $submitted);
+        $accepted = $this->fetchConfirmation();
 
         return new Receipt(
             $stadiumNumber,
@@ -578,7 +968,9 @@ final class PurchaserCore implements Contracts\PurchaserCore
             new DateTimeImmutable,
             (int) round((microtime(true) - $started) * 1000.0),
             $this->stepMilliseconds,
-            $confirmation
+            $confirmation,
+            $accepted['receiptNumber'],
+            $accepted['acceptedAmount']
         );
     }
 
@@ -604,13 +996,13 @@ final class PurchaserCore implements Contracts\PurchaserCore
     /**
      * @param  non-empty-string  $step
      */
-    private function assertDeadline(string $step): void
+    private function assertDeadline(string $step, ?DateTimeInterface $deadline): void
     {
-        if ($this->deadline === null) {
+        if ($deadline === null) {
             return;
         }
 
-        $remaining = $this->deadline->getTimestamp() - time();
+        $remaining = $deadline->getTimestamp() - time();
 
         if ($remaining <= $this->deadlineMarginSeconds) {
             throw new PurchaserException(

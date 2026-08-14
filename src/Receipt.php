@@ -22,6 +22,8 @@ final readonly class Receipt
      * @param  int  $elapsedMilliseconds  purchase() 全体の所要時間
      * @param  array  $stepMilliseconds  ステップ名 => 所要時間（m2 に間に合うかの実測用）
      * @param  string  $confirmationText  完了画面（thanksArea）のテキスト
+     * @param  ?string  $receiptNumber  契約番号。読めなければ null
+     * @param  ?int  $acceptedAmount  購入成立金額。読めなければ null
      */
     public function __construct(
         public int $stadiumNumber,
@@ -33,7 +35,9 @@ final readonly class Receipt
         public DateTimeImmutable $submittedAt,
         public int $elapsedMilliseconds,
         public array $stepMilliseconds,
-        public string $confirmationText
+        public string $confirmationText,
+        public ?string $receiptNumber = null,
+        public ?int $acceptedAmount = null
     ) {
         //
     }
@@ -54,6 +58,8 @@ final readonly class Receipt
             'elapsed_milliseconds' => $this->elapsedMilliseconds,
             'step_milliseconds' => $this->stepMilliseconds,
             'confirmation_text' => $this->confirmationText,
+            'receipt_number' => $this->receiptNumber,
+            'accepted_amount' => $this->acceptedAmount,
         ];
     }
 }

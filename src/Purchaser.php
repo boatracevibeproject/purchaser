@@ -7,6 +7,7 @@ namespace BVP\Purchaser;
 /**
  * @method static \BVP\Purchaser\PurchaserCore setMaxDepositAmount(int $maxDepositAmount)
  * @method static \BVP\Purchaser\PurchaserCore setMaxTotalAmount(int $maxTotalAmount)
+ * @method static \BVP\Purchaser\PurchaserCore setMaxBatchAmount(?int $maxBatchAmount)
  * @method static \BVP\Purchaser\PurchaserCore setSubscriberNumber(string $subscriberNumber)
  * @method static \BVP\Purchaser\PurchaserCore setPersonalIdentificationNumber(string $personalIdentificationNumber)
  * @method static \BVP\Purchaser\PurchaserCore setAuthenticationPassword(string $authenticationPassword)
@@ -17,6 +18,7 @@ namespace BVP\Purchaser;
  * @method static int balance()
  * @method static int ensureBalance(int $required = \BVP\Purchaser\PurchaserCore::DEFAULT_TARGET_BALANCE)
  * @method static \BVP\Purchaser\Receipt purchase(int $stadiumNumber, int $number, int $type, array $focuses)
+ * @method static \BVP\Purchaser\BatchReceipt purchaseMany(array $races)
  *
  * @author shimomo
  */
