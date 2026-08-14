@@ -1,4 +1,4 @@
-name: security
+name: audit
 
 on:
   push:
@@ -13,8 +13,8 @@ permissions:
   contents: read
 
 jobs:
-  security:
-    name: Security on PHP ${{ matrix.php-version }} (Ubuntu 24.04)
+  audit:
+    name: Audit on PHP ${{ matrix.php-version }} (Ubuntu 24.04)
     runs-on: ubuntu-24.04
     strategy:
       matrix:
