@@ -22,73 +22,113 @@ final class PurchaserCore implements Contracts\PurchaserCore
 {
     /**
      * 朝に満たしておく残高の既定値（円）。
+     *
+     * @var int
      */
-    public const DEFAULT_TARGET_BALANCE = 10000;
+    public const int DEFAULT_TARGET_BALANCE = 10000;
 
     /**
      * 1回の入金指示の上限（円）。想定外の巨額入金を防ぐ安全弁。
+     *
+     * @var int
      */
-    public const DEFAULT_MAX_DEPOSIT_AMOUNT = 10000;
+    public const int DEFAULT_MAX_DEPOSIT_AMOUNT = 10000;
 
     /**
      * 1レースあたりの購入金額合計の上限（円）。呼び出し側のバグを止める安全弁。
+     *
+     * @var int
      */
-    public const DEFAULT_MAX_TOTAL_AMOUNT = 10000;
+    public const int DEFAULT_MAX_TOTAL_AMOUNT = 10000;
 
     /**
      * 入金指示の最小単位（円）。
+     *
+     * @var int
      */
-    private const DEPOSIT_UNIT = 1000;
+    private const int DEPOSIT_UNIT = 1000;
 
-    private const WAIT_TIMEOUT_SECONDS = 10;
+    /**
+     * @var int
+     */
+    private const int WAIT_TIMEOUT_SECONDS = 10;
 
     /**
      * ポーリング間隔。既定の 500ms は 1 ステップあたり平均 250ms を捨てることになり、
      * 30 ステップ超のこのフローでは無視できない遅延になるため短くしている。
+     *
+     * @var int
      */
-    private const WAIT_INTERVAL_MILLISECONDS = 100;
+    private const int WAIT_INTERVAL_MILLISECONDS = 100;
 
     /**
      * 「出ていないのが正常」な要素を待つときのタイムアウト。
+     *
+     * @var int
      */
-    private const OPTIONAL_WAIT_TIMEOUT_SECONDS = 2;
+    private const int OPTIONAL_WAIT_TIMEOUT_SECONDS = 2;
 
     /**
      * 入金が残高に反映されるまで待つ上限。
+     *
+     * @var float
      */
-    private const DEPOSIT_REFLECTION_TIMEOUT_SECONDS = 60.0;
+    private const float DEPOSIT_REFLECTION_TIMEOUT_SECONDS = 60.0;
 
-    private const DEPOSIT_REFLECTION_INTERVAL_MICROSECONDS = 500_000;
+    /**
+     * @var int
+     */
+    private const int DEPOSIT_REFLECTION_INTERVAL_MICROSECONDS = 500_000;
 
-    private const LOGIN_URL = 'https://ib.mbrace.or.jp/';
+    /**
+     * @var string
+     */
+    private const string LOGIN_URL = 'https://ib.mbrace.or.jp/';
 
     /**
      * ⚠ サイトの DOM に直結しているのでここだけを直せば追従できるようにまとめている。
      * とくに RACE_NUMBER は絶対パスに近い XPath で、DOM が少し変わるだけで壊れる。
+     *
+     * @var string
      */
-    private const LOCATOR_RACE_NUMBER
+    private const string LOCATOR_RACE_NUMBER
         = 'descendant-or-self::body/div[1]/main/div/div[1]/section[2]/div[2]/dl/dt/strong';
 
-    private const LOCATOR_BALANCE = '.gray > .col3';
+    /**
+     * @var string
+     */
+    private const string LOCATOR_BALANCE = '.gray > .col3';
 
     /**
      * ヘッダの購入限度額。残高照会ダイアログの LOCATOR_BALANCE と同じ
      * currentBetLimitAmount を出しているので、レース間の残高確認はここで足りる。
+     *
+     * @var string
      */
-    private const LOCATOR_HEADER_BALANCE = '#currentBetLimitAmount';
+    private const string LOCATOR_HEADER_BALANCE = '#currentBetLimitAmount';
 
     /**
      * 投票完了画面の契約番号・購入成立金額の入れ物。
+     *
+     * @var string
      */
-    private const LOCATOR_CONFIRMATION = '#confirmationArea';
+    private const string LOCATOR_CONFIRMATION = '#confirmationArea';
 
     /**
      * 投票完了画面の「場を変更して投票する」。ログイン直後と同じ場選択画面に戻る。
+     *
+     * @var string
      */
-    private const LOCATOR_MODIFY_JYO_BET = 'modifyJyoBetForm';
+    private const string LOCATOR_MODIFY_JYO_BET = 'modifyJyoBetForm';
 
+    /**
+     * @var ?\Facebook\WebDriver\Remote\RemoteWebDriver
+     */
     private ?RemoteWebDriver $driver = null;
 
+    /**
+     * @var ?\DateTimeInterface
+     */
     private ?DateTimeInterface $deadline = null;
 
     /**
@@ -378,7 +418,7 @@ final class PurchaserCore implements Contracts\PurchaserCore
 
         $started = microtime(true);
 
-        /** @var BatchReceipt */
+        /** @var \BVP\Purchaser\BatchReceipt */
         return $this->withSession(
             function () use ($plans, $required, $started): BatchReceipt {
                 // 入金と反映待ちを全レース分まとめて先に置き切る。

@@ -13,6 +13,9 @@ use PHPUnit\Framework\TestCase as PHPUnitTestCase;
  */
 final class LockTest extends PHPUnitTestCase
 {
+    /**
+     * @var string
+     */
     private string $path = '';
 
     #[\Override]
