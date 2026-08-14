@@ -5,6 +5,15 @@ declare(strict_types=1);
 namespace BVP\Purchaser;
 
 /**
+ * 静的に呼ぶためのファサード。呼び出しはすべて PurchaserCore へ委譲する。
+ *
+ * 組織内で最も新しい scraper は静的シングルトンを明示的に持たない。理由は
+ * 「インスタンスごとに pacing と cache を分けたい」からで、purchaser にその要求は無い。
+ * テレボートのセッションはファイルロックでプロセスをまたいで直列化しているので、
+ * インスタンスを増やしても同時に動かせるのは1つだけになる。
+ *
+ * PurchaserCore を直接 new しても使える。DI コンテナに載せるならそちら。
+ *
  * @method static \BVP\Purchaser\PurchaserCore setMaxDepositAmount(int $maxDepositAmount)
  * @method static \BVP\Purchaser\PurchaserCore setMaxTotalAmount(int $maxTotalAmount)
  * @method static \BVP\Purchaser\PurchaserCore setMaxBatchAmount(?int $maxBatchAmount)

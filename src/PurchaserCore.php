@@ -406,6 +406,13 @@ final class PurchaserCore implements Contracts\PurchaserCore
      * 締切をまたぐ・残高が届かないレースは、そのレースだけ飛ばして次へ進む。
      * 画面操作に失敗した場合は盤面が読めないので、以降のレースを中止する。
      *
+     * scraper は一括処理を BatchScraper という別クラスに分けているが、ここでは
+     * 分けていない。BatchScraper が単発の公開メソッドを繰り返し呼ぶだけで成立する
+     * のに対し、このメソッドの値打ちは「1回のセッションを共有すること」そのもので、
+     * ログイン・ロック・残高の確保・完了画面からの復帰という内部状態に踏み込む。
+     * 別クラスへ出すにはセッションの開閉を公開 API にする必要があり、閉じ忘れと
+     * ロックの取りっぱなしを呼び出し側に持ち込むことになる。
+     *
      * @param non-empty-list<array{
      *     stadiumNumber: int,
      *     number: int,
