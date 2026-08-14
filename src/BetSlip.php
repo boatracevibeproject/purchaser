@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace BVP\Purchaser;
 
+use BVP\Purchaser\Enums\BetType;
+
 /**
  * 買い目（focuses）の解釈・検証・合計金額の算出。
  *
@@ -15,31 +17,16 @@ namespace BVP\Purchaser;
 final readonly class BetSlip
 {
     /**
-     * 賭式ごとの組番の要素数。キーは \App\Enums\BetType 相当の 1〜7。
-     */
-    private const LEG_COUNTS = [
-        1 => 1, // 単勝
-        2 => 1, // 複勝
-        3 => 2, // 2連単
-        4 => 2, // 2連複
-        5 => 2, // 拡連複（ワイド）
-        6 => 3, // 3連単
-        7 => 3, // 3連複
-    ];
-
-    /**
-     * 着順を問わない賭式。組番の重複判定を順序に依存させないために使う。
-     */
-    private const COMBINATION_BET_TYPES = [4, 5, 7];
-
-    /**
      * 購入金額の最小単位（円）。
+     *
+     * @var positive-int
      */
-    public const AMOUNT_UNIT = 100;
+    public const int AMOUNT_UNIT = 100;
 
     /**
-     * @param  non-empty-list<array{legs: non-empty-list<string>, amount: int}>  $bets
-     * @param  positive-int  $totalAmount
+     * @param int $betType
+     * @param non-empty-list<array{legs: non-empty-list<string>, amount: int}> $bets
+     * @param positive-int $totalAmount
      */
     private function __construct(
         public int $betType,
@@ -50,13 +37,19 @@ final readonly class BetSlip
     }
 
     /**
-     * @param  array<array-key, mixed>  $focuses  組番 => 購入金額
+     * $focuses は 組番 => 購入金額。
      *
-     * @throws PurchaserException
+     * @param array<array-key, mixed> $focuses
+     * @param int $betType
+     * @return self
+     *
+     * @throws \BVP\Purchaser\PurchaserException 賭式・組番・金額のいずれかが不正なとき
      */
     public static function fromFocuses(array $focuses, int $betType): self
     {
-        if (!isset(self::LEG_COUNTS[$betType])) {
+        $type = BetType::tryFrom($betType);
+
+        if ($type === null) {
             throw new PurchaserException("賭式が不正です。type={$betType}（1〜7）");
         }
 
@@ -64,7 +57,7 @@ final readonly class BetSlip
             throw new PurchaserException('買い目が空です。');
         }
 
-        $expectedLegCount = self::LEG_COUNTS[$betType];
+        $expectedLegCount = $type->legCount();
         $bets = [];
         $totalAmount = 0;
         $seen = [];
@@ -102,7 +95,7 @@ final readonly class BetSlip
                 throw new PurchaserException("組番に同じ艇番が重複しています。組番 {$focus}");
             }
 
-            $key = self::deduplicationKey($legs, $betType);
+            $key = self::deduplicationKey($legs, $type);
 
             if (isset($seen[$key])) {
                 throw new PurchaserException("同じ買い目が重複しています。組番 {$focus}");
@@ -113,7 +106,7 @@ final readonly class BetSlip
             $totalAmount += $amount;
         }
 
-        return new self($betType, $bets, $totalAmount);
+        return new self($type->value, $bets, $totalAmount);
     }
 
     /**
@@ -129,12 +122,13 @@ final readonly class BetSlip
     /**
      * 着順を問わない賭式では 1=2 と 2=1 を同一視する。
      *
-     * @param  non-empty-list<string>  $legs
+     * @param non-empty-list<string> $legs
+     * @param \BVP\Purchaser\Enums\BetType $betType
      * @return non-empty-string
      */
-    private static function deduplicationKey(array $legs, int $betType): string
+    private static function deduplicationKey(array $legs, BetType $betType): string
     {
-        if (in_array($betType, self::COMBINATION_BET_TYPES, true)) {
+        if ($betType->isCombination()) {
             sort($legs);
 
             return implode('=', $legs);
