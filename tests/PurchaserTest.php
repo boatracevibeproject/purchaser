@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace BVP\Purchaser\Tests;
 
 use BVP\Purchaser\Purchaser;
-use BVP\Purchaser\PurchaserCore;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 /**
+ * 静的な入口（instance / swap / forget）の振る舞い。
+ *
  * @author shimomo
  */
 final class PurchaserTest extends PHPUnitTestCase
@@ -16,14 +17,14 @@ final class PurchaserTest extends PHPUnitTestCase
     use TeleboatCredentials;
 
     /**
-     * ファサードはシングルトンを抱えるので、テスト間に持ち越さない。
+     * シングルトンを抱えるので、テスト間に持ち越さない。
      *
      * @return void
      */
     #[\Override]
     protected function setUp(): void
     {
-        Purchaser::resetInstance();
+        Purchaser::forget();
     }
 
     /**
@@ -32,31 +33,43 @@ final class PurchaserTest extends PHPUnitTestCase
     #[\Override]
     protected function tearDown(): void
     {
-        Purchaser::resetInstance();
+        Purchaser::forget();
     }
 
     /**
-     * ブラウザを起動せずに、静的呼び出しが本体へ委譲されることだけを確認する。
+     * ブラウザを起動せずに、実体が1つだけ作られることを確認する。
      *
      * @return void
      */
-    public function test_static_call_is_forwarded_to_the_core(): void
+    public function test_instance_returns_the_same_object(): void
     {
-        Purchaser::createInstance(new PurchaserCore());
+        $first = Purchaser::instance();
 
-        $this->assertInstanceOf(PurchaserCore::class, Purchaser::setMaxTotalAmount(5000));
+        $this->assertInstanceOf(Purchaser::class, $first);
+        $this->assertSame($first, Purchaser::instance());
     }
 
     /**
      * @return void
      */
-    public function test_create_instance_replaces_the_singleton(): void
+    public function test_swap_replaces_the_singleton(): void
     {
-        $first = Purchaser::createInstance(new PurchaserCore());
-        $second = Purchaser::createInstance(new PurchaserCore());
+        $first = Purchaser::swap(new Purchaser());
+        $second = Purchaser::swap(new Purchaser());
 
         $this->assertNotSame($first, $second);
-        $this->assertSame($second, Purchaser::getInstance());
+        $this->assertSame($second, Purchaser::instance());
+    }
+
+    /**
+     * @return void
+     */
+    public function test_forget_drops_the_singleton(): void
+    {
+        $first = Purchaser::instance();
+        Purchaser::forget();
+
+        $this->assertNotSame($first, Purchaser::instance());
     }
 
     /**
@@ -66,15 +79,14 @@ final class PurchaserTest extends PHPUnitTestCase
     {
         $this->requireOptIn('PURCHASER_E2E_DEPOSIT');
 
-        Purchaser::createInstance(new PurchaserCore());
-
-        $balance = Purchaser::setSubscriberNumber($this->credential('SUBSCRIBER_NUMBER'))
+        $balance = Purchaser::instance()
+            ->setSubscriberNumber($this->credential('SUBSCRIBER_NUMBER'))
             ->setPersonalIdentificationNumber($this->credential('PERSONAL_IDENTIFICATION_NUMBER'))
             ->setAuthenticationPassword($this->credential('AUTHENTICATION_PASSWORD'))
             ->setPurchasePassword($this->credential('PURCHASE_PASSWORD'))
             ->setArtifactDirectory(sys_get_temp_dir() . '/bvp-purchaser-artifacts')
             ->ensureBalance();
 
-        $this->assertGreaterThanOrEqual(PurchaserCore::DEFAULT_TARGET_BALANCE, $balance);
+        $this->assertGreaterThanOrEqual(Purchaser::DEFAULT_TARGET_BALANCE, $balance);
     }
 }

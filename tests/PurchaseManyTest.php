@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace BVP\Purchaser\Tests;
 
-use BVP\Purchaser\PurchaserCore;
+use BVP\Purchaser\Purchaser;
 use BVP\Purchaser\PurchaserException;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
@@ -28,7 +28,7 @@ final class PurchaseManyTest extends PHPUnitTestCase
         $this->expectExceptionMessage('レースが空です。');
 
         /** @psalm-suppress ArgumentTypeCoercion 呼び出し側が空を渡しうるので、実行時に落ちることを確かめる */
-        (new PurchaserCore())->purchaseMany([]);
+        (new Purchaser())->purchaseMany([]);
     }
 
     /**
@@ -41,7 +41,7 @@ final class PurchaseManyTest extends PHPUnitTestCase
         $this->expectException(PurchaserException::class);
         $this->expectExceptionMessage('レースが締切の早い順に並んでいません。');
 
-        (new PurchaserCore())->purchaseMany([
+        (new Purchaser())->purchaseMany([
             [
                 'stadiumNumber' => 24,
                 'number' => 12,
@@ -67,7 +67,7 @@ final class PurchaseManyTest extends PHPUnitTestCase
         $this->expectException(PurchaserException::class);
         $this->expectExceptionMessage('同じレース・同じ賭式が重複しています。');
 
-        (new PurchaserCore())->purchaseMany([
+        (new Purchaser())->purchaseMany([
             ['stadiumNumber' => 24, 'number' => 12, 'type' => 6, 'focuses' => ['1-2-3' => 100]],
             ['stadiumNumber' => 24, 'number' => 12, 'type' => 6, 'focuses' => ['1-2-4' => 100]],
         ]);
@@ -85,7 +85,7 @@ final class PurchaseManyTest extends PHPUnitTestCase
         $this->expectException(PurchaserException::class);
         $this->expectExceptionMessage('purchase の開始 を中止しました。');
 
-        (new PurchaserCore())->purchaseMany([
+        (new Purchaser())->purchaseMany([
             [
                 'stadiumNumber' => 24,
                 'number' => 12,
@@ -113,7 +113,7 @@ final class PurchaseManyTest extends PHPUnitTestCase
         $this->expectException(PurchaserException::class);
         $this->expectExceptionMessage('購入金額の合計 3000 円が1セッションの上限 2000 円を超えています。');
 
-        (new PurchaserCore())
+        (new Purchaser())
             ->setMaxTotalAmount(1000)
             ->setMaxBatchAmount(2000)
             ->purchaseMany([
@@ -133,9 +133,9 @@ final class PurchaseManyTest extends PHPUnitTestCase
     public function test_the_batch_limit_falls_back_to_the_per_race_limit(): void
     {
         $this->expectException(PurchaserException::class);
-        $this->expectExceptionMessage('1セッションの上限 ' . PurchaserCore::DEFAULT_MAX_TOTAL_AMOUNT . ' 円');
+        $this->expectExceptionMessage('1セッションの上限 ' . Purchaser::DEFAULT_MAX_TOTAL_AMOUNT . ' 円');
 
-        (new PurchaserCore())->purchaseMany([
+        (new Purchaser())->purchaseMany([
             ['stadiumNumber' => 24, 'number' => 11, 'type' => 6, 'focuses' => ['1-2-3' => 10000]],
             ['stadiumNumber' => 24, 'number' => 12, 'type' => 6, 'focuses' => ['1-2-3' => 10000]],
         ]);
@@ -149,7 +149,7 @@ final class PurchaseManyTest extends PHPUnitTestCase
         $this->expectException(PurchaserException::class);
         $this->expectExceptionMessage('1レースの上限 1000 円を超えています。');
 
-        (new PurchaserCore())
+        (new Purchaser())
             ->setMaxTotalAmount(1000)
             ->setMaxBatchAmount(100000)
             ->purchaseMany([
@@ -166,7 +166,7 @@ final class PurchaseManyTest extends PHPUnitTestCase
         $this->expectException(PurchaserException::class);
         $this->expectExceptionMessage('レース番号が不正です。number=13（1〜12）');
 
-        (new PurchaserCore())->purchaseMany([
+        (new Purchaser())->purchaseMany([
             ['stadiumNumber' => 24, 'number' => 12, 'type' => 6, 'focuses' => ['1-2-3' => 100]],
             ['stadiumNumber' => 24, 'number' => 13, 'type' => 6, 'focuses' => ['1-2-3' => 100]],
         ]);
@@ -182,7 +182,7 @@ final class PurchaseManyTest extends PHPUnitTestCase
         $this->expectException(PurchaserException::class);
         $this->expectExceptionMessage('組番の要素数が賭式と一致しません。');
 
-        (new PurchaserCore())->purchaseMany([
+        (new Purchaser())->purchaseMany([
             ['stadiumNumber' => 24, 'number' => 11, 'type' => 6, 'focuses' => ['1-2-3' => 100]],
             ['stadiumNumber' => 24, 'number' => 12, 'type' => 6, 'focuses' => ['1-2' => 100]],
         ]);
@@ -198,7 +198,7 @@ final class PurchaseManyTest extends PHPUnitTestCase
         $this->expectException(PurchaserException::class);
         $this->expectExceptionMessage('purchase の開始 を中止しました。');
 
-        (new PurchaserCore())
+        (new Purchaser())
             ->setDeadline(new DateTimeImmutable('2000-01-01 15:00:00'))
             ->purchaseMany([
                 ['stadiumNumber' => 24, 'number' => 12, 'type' => 6, 'focuses' => ['1-2-3' => 100]],

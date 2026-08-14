@@ -33,7 +33,8 @@ require __DIR__ . '/vendor/autoload.php';
 
 use BVP\Purchaser\Purchaser;
 
-$balance = Purchaser::setSubscriberNumber('xxxxxxxx')      // 加入者番号
+$balance = Purchaser::instance()
+    ->setSubscriberNumber('xxxxxxxx')                      // 加入者番号
     ->setPersonalIdentificationNumber('xxxx')              // 暗証番号
     ->setAuthenticationPassword('xxxxxx')                  // 認証用パスワード
     ->setPurchasePassword('xxxxxx')                        // 投票用パスワード
@@ -64,7 +65,8 @@ require __DIR__ . '/vendor/autoload.php';
 use BVP\Purchaser\Purchaser;
 
 // type: 単勝 => 1, 複勝 => 2, 2連単 => 3, 2連複 => 4, 拡連複 => 5, 3連単 => 6, 3連複 => 7
-$receipt = Purchaser::setSubscriberNumber('xxxxxxxx')
+$receipt = Purchaser::instance()
+    ->setSubscriberNumber('xxxxxxxx')
     ->setPersonalIdentificationNumber('xxxx')
     ->setAuthenticationPassword('xxxxxx')
     ->setPurchasePassword('xxxxxx')
@@ -83,6 +85,10 @@ echo $receipt->elapsedMilliseconds; // 所要時間（締切何分前まで詰�
 print_r($receipt->stepMilliseconds);
 ```
 
+`Purchaser::instance()` はシングルトンを返します。DI コンテナに載せるなら、
+`BVP\Purchaser\Contracts\Purchaser` を `BVP\Purchaser\Purchaser` へ束ねて注入してください。
+テストで差し替えるときは `Purchaser::swap()`、捨てるときは `Purchaser::forget()` です。
+
 `purchase()` は投票の前に `ensureBalance()` を通すので、残高が足りなければその場でも入金します。
 朝に満たしてあれば照会1回で素通りします。
 
@@ -95,7 +101,8 @@ print_r($receipt->stepMilliseconds);
 2レース目以降は投票完了画面から場選択画面へ戻って同じ手順を繰り返します。
 
 ```php
-$batch = Purchaser::setSubscriberNumber('xxxxxxxx')
+$batch = Purchaser::instance()
+    ->setSubscriberNumber('xxxxxxxx')
     ->setPersonalIdentificationNumber('xxxx')
     ->setAuthenticationPassword('xxxxxx')
     ->setPurchasePassword('xxxxxx')

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace BVP\Purchaser\Tests;
 
-use BVP\Purchaser\PurchaserCore;
+use BVP\Purchaser\Purchaser;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 /**
@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase as PHPUnitTestCase;
  *
  * @author shimomo
  */
-final class PurchaserCoreTest extends PHPUnitTestCase
+final class PurchaserE2ETest extends PHPUnitTestCase
 {
     use TeleboatCredentials;
 
@@ -47,10 +47,10 @@ final class PurchaserCoreTest extends PHPUnitTestCase
 
         $purchaser = $this->purchaser();
 
-        $first = $purchaser->ensureBalance(PurchaserCore::DEFAULT_TARGET_BALANCE);
-        $this->assertGreaterThanOrEqual(PurchaserCore::DEFAULT_TARGET_BALANCE, $first);
+        $first = $purchaser->ensureBalance(Purchaser::DEFAULT_TARGET_BALANCE);
+        $this->assertGreaterThanOrEqual(Purchaser::DEFAULT_TARGET_BALANCE, $first);
 
-        $second = $purchaser->ensureBalance(PurchaserCore::DEFAULT_TARGET_BALANCE);
+        $second = $purchaser->ensureBalance(Purchaser::DEFAULT_TARGET_BALANCE);
         $this->assertSame($first, $second, '2回目の ensureBalance() で残高が増えている（入金が冪等でない）');
     }
 
@@ -114,12 +114,12 @@ final class PurchaserCoreTest extends PHPUnitTestCase
     }
 
     /**
-     * @return \BVP\Purchaser\PurchaserCore
+     * @return \BVP\Purchaser\Purchaser
      */
-    private function purchaser(): PurchaserCore
+    private function purchaser(): Purchaser
     {
         // コンストラクタではブラウザを起動しないので、スキップされるテストでも無害。
-        return (new PurchaserCore())
+        return (new Purchaser())
             ->setSubscriberNumber($this->credential('SUBSCRIBER_NUMBER'))
             ->setPersonalIdentificationNumber($this->credential('PERSONAL_IDENTIFICATION_NUMBER'))
             ->setAuthenticationPassword($this->credential('AUTHENTICATION_PASSWORD'))
