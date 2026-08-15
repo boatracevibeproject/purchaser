@@ -1,4 +1,4 @@
-# Purchaser for Boatrace Venture Project
+# Purchaser
 
 [![php](https://poser.pugx.org/bvp/purchaser/require/php)](https://packagist.org/packages/bvp/purchaser)
 [![stable](https://poser.pugx.org/bvp/purchaser/v/stable)](https://packagist.org/packages/bvp/purchaser)
@@ -18,6 +18,10 @@ Purchaser は、舟券を自動購入するための PHP ライブラリです�
 ```bash
 composer require bvp/purchaser
 ```
+
+操作は Selenium 経由の Google Chrome で行うので、別途 Selenium Grid Server が要ります
+（[クイックスタート](#クイックスタート) の Step 3 参照）。接続先の既定は `http://localhost:4444` で、
+変えるなら `Purchaser::instance(seleniumServerUrl: 'http://selenium:4444')` のように渡してください。
 
 ## 使い方
 
@@ -51,6 +55,7 @@ $balance = Purchaser::instance()
 4. 残高照会で必要額を満たしたことを確認（入金の反映は非同期）
 
 残高が既に足りていれば手順3を飛ばします。このとき手順2の照会が手順4の確認を兼ねます。
+入金せずに残高を見るだけなら `balance()` です。
 
 締切直前の投票からこの往復を外せるので、**朝に1回呼んでおくのが基本の運用**です。
 あわせて、ログイン・投票ウィンドウの生成・お知らせダイアログ・残高照会の DOM を
@@ -185,7 +190,7 @@ foreach ($batch->skipped as $skipped) {
 | `setMaxDepositAmount()` | 10,000 円 | 1回の入金指示の上限。想定外の巨額入金を止める |
 | `setDeadline()` | なし | 締切間際になったら**投票せずに**中止する |
 | `setArtifactDirectory()` | なし | 失敗時にスクリーンショットと HTML を保存する |
-| `setLockPath()` | `/tmp/bvp-purchaser.lock` | 朝の入金・締切前の投票・手動ログインを排他する |
+| `setLockPath()` | 一時ディレクトリの `bvp-purchaser.lock` | 朝の入金・締切前の投票・手動ログインを排他する |
 
 買い目・金額の検証（組番の要素数、艇番の範囲、100 円単位、重複）は
 **ブラウザを起動する前**に済ませるので、直せない入力はテレボートに触る前に落ちます。
@@ -210,18 +215,22 @@ cd purchaser && composer install
 
 ### Step 3
 
-加入者番号、暗証番号、認証用パスワード、投票用パスワード、買い目をそれぞれ書き換えます。
-
-```bash
-code example.php
-```
-
-### Step 4
-
 Google Chrome の [Selenium Grid Server](https://github.com/SeleniumHQ/docker-selenium) を起動します。
 
 ```bash
-docker run -d -p 4444:4444 --shm-size="2g" --name selenium-standalone-chrome selenium/standalone-chrome:4.2.2-20220622
+docker run -d -p 4444:4444 --shm-size="2g" --name selenium-standalone-chrome selenium/standalone-chrome:151.0-20260808
+```
+
+イメージは日付まで固定しています。Chrome が上がるとテレボート側の見え方も変わりうるので、
+上げるときは E2E テストを通してからにしてください。
+
+### Step 4
+
+[使い方](#使い方) のコードを `example.php` として保存し、加入者番号、暗証番号、
+認証用パスワード、投票用パスワード、買い目をそれぞれ書き換えます。
+
+```bash
+code example.php
 ```
 
 ### Step 5
@@ -252,18 +261,16 @@ vendor/bin/phpunit
 会員情報を環境変数に設定します。
 
 ```bash
-$env:SUBSCRIBER_NUMBER = "加入者番号"
-$env:PERSONAL_IDENTIFICATION_NUMBER = "暗証番号"
-$env:AUTHENTICATION_PASSWORD = "認証用パスワード"
-$env:PURCHASE_PASSWORD = "投票用パスワード"
+export SUBSCRIBER_NUMBER="加入者番号"
+export PERSONAL_IDENTIFICATION_NUMBER="暗証番号"
+export AUTHENTICATION_PASSWORD="認証用パスワード"
+export PURCHASE_PASSWORD="投票用パスワード"
 ```
 
-Selenium Server を起動します。
+Selenium Grid Server も起動しておきます（クイックスタートの Step 3 と同じものです）。
 
 ```bash
-npm install selenium-standalone --save-dev
-npx selenium-standalone install
-npx selenium-standalone start
+docker run -d -p 4444:4444 --shm-size="2g" --name selenium-standalone-chrome selenium/standalone-chrome:151.0-20260808
 ```
 
 ## 免責事項
