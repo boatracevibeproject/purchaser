@@ -1216,6 +1216,9 @@ final class Purchaser implements Contracts\Purchaser
     {
         $options = new ChromeOptions();
         $options->addArguments([
+            // Chromedriver 132 以降は new が既定なので冗長だが、それより古い Chrome を積んだ
+            // Grid に当たったときに旧ヘッドレスへ落ちないよう明示しておく。旧ヘッドレスは
+            // 別実装で、DOM の出方が変わりうる。
             '--headless=new',
             '--disable-gpu',
             '--disable-dev-shm-usage',
