@@ -7,8 +7,9 @@
 [![test](https://github.com/boatracevibeproject/purchaser/actions/workflows/test.yml/badge.svg)](https://github.com/boatracevibeproject/purchaser/actions/workflows/test.yml)
 [![lint](https://github.com/boatracevibeproject/purchaser/actions/workflows/lint.yml/badge.svg)](https://github.com/boatracevibeproject/purchaser/actions/workflows/lint.yml)
 [![psalm](https://github.com/boatracevibeproject/purchaser/actions/workflows/psalm.yml/badge.svg)](https://github.com/boatracevibeproject/purchaser/actions/workflows/psalm.yml)
-[![security](https://github.com/boatracevibeproject/purchaser/actions/workflows/security.yml/badge.svg)](https://github.com/boatracevibeproject/purchaser/actions/workflows/security.yml)
+[![audit](https://github.com/boatracevibeproject/purchaser/actions/workflows/audit.yml/badge.svg)](https://github.com/boatracevibeproject/purchaser/actions/workflows/audit.yml)
 [![keepalive](https://github.com/boatracevibeproject/purchaser/actions/workflows/keepalive.yml/badge.svg)](https://github.com/boatracevibeproject/purchaser/actions/workflows/keepalive.yml)
+[![dependabot-updates](https://github.com/boatracevibeproject/purchaser/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/boatracevibeproject/purchaser/actions/workflows/dependabot/dependabot-updates)
 
 Purchaser は、舟券を自動購入するための PHP ライブラリです。
 
