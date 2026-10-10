@@ -124,7 +124,7 @@ final readonly class BetSlip
      *
      * @param non-empty-list<string> $legs
      * @param \BVP\Purchaser\Enums\BetType $betType
-     * @return non-empty-string
+     * @return string
      */
     private static function deduplicationKey(array $legs, BetType $betType): string
     {
