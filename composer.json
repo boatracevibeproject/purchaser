@@ -1,6 +1,6 @@
 {
     "name": "bvp/purchaser",
-    "description": "Purchaser for Boatrace Venture Project",
+    "description": "BVP Purchaser：舟券を自動購入する PHP ライブラリ | PHP library for purchasing boatrace tickets",
     "license": "MIT",
     "type": "library",
     "keywords": [
